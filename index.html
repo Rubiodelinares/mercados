@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-title" content="CryptoSignal Pro">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#02040a">
-    <title>CryptoSignal Pro v4.7 - Trading Simulator</title>
+    <title>CryptoSignal Pro v4.8 - Trading Simulator</title>
     <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -680,6 +680,21 @@
             border-color: rgba(59, 130, 246, 0.5);
             box-shadow: 0 0 20px rgba(59, 130, 246, 0.08);
         }
+
+        /* Sync banner */
+        .sync-banner {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
+            border: 1px solid rgba(59, 130, 246, 0.25);
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        [data-theme="light"] .sync-banner {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.05), rgba(139, 92, 246, 0.05));
+            border-color: rgba(59, 130, 246, 0.2);
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -690,7 +705,7 @@
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-violet-700 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-500/10">CS</div>
                 <div>
-                    <h1 class="font-bold text-[15px] tracking-tight">CryptoSignal Pro <span class="text-[11px] font-normal text-blue-400 ml-1">v4.7</span></h1>
+                    <h1 class="font-bold text-[15px] tracking-tight">CryptoSignal Pro <span class="text-[11px] font-normal text-blue-400 ml-1">v4.8</span></h1>
                     <p class="text-[11px] text-slate-400">Simulador Avanzado Multi-Activo</p>
                 </div>
             </div>
@@ -724,6 +739,20 @@
     </header>
 
     <main class="max-w-[1500px] mx-auto px-4 py-4 space-y-4">
+        <!-- SYNC BANNER -->
+        <div class="sync-banner" id="sync-banner">
+            <svg class="w-5 h-5 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+            <div class="flex-1 min-w-0">
+                <div class="text-[12px] font-semibold text-blue-300">💡 Sincronización entre dispositivos</div>
+                <div class="text-[11px] text-slate-400 mt-0.5">Los datos se guardan solo en este navegador. Usa <strong>Guardar Progreso</strong> para llevar tu cartera a otro dispositivo.</div>
+            </div>
+            <div class="flex items-center gap-2 flex-shrink-0">
+                <button onclick="exportFullState()" class="px-3 py-1.5 rounded-lg bg-blue-600/20 border border-blue-600/30 text-blue-400 text-[11px] font-semibold hover:bg-blue-600/30 transition">💾 Guardar</button>
+                <button onclick="document.getElementById('import-file').click()" class="px-3 py-1.5 rounded-lg bg-violet-600/20 border border-violet-600/30 text-violet-400 text-[11px] font-semibold hover:bg-violet-600/30 transition">📂 Cargar</button>
+                <input type="file" id="import-file" accept=".json" class="hidden" onchange="importFullState(this)">
+            </div>
+        </div>
+
         <div class="rounded-xl border border-amber-500/10 bg-amber-500/3 p-3.5 flex items-start gap-3">
             <svg class="w-4 h-4 text-amber-500/50 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z"/></svg>
             <div class="text-[12px] text-amber-200/70 leading-relaxed">
@@ -1279,7 +1308,7 @@
     </main>
 
     <footer class="max-w-[1500px] mx-auto px-4 py-6 text-center text-[11px] text-slate-500 border-t border-slate-800/20 mt-4">
-        <p>CryptoSignal Pro v4.7 — Simulador educativo. No conecta con exchanges reales.</p>
+        <p>CryptoSignal Pro v4.8 — Simulador educativo. No conecta con exchanges reales.</p>
         <p class="mt-1">BTC/ETH/SOL: datos reales vía Binance | SPY/AAPL: simulación cuando Yahoo no disponible | Noticias: NewsAPI.org + RSS internacional traducido al español</p>
     </footer>
 
@@ -1340,6 +1369,18 @@
             </div>
             <div class="space-y-3">
                 <div class="p-3 rounded-lg bg-slate-800/70 border border-slate-800/40">
+                    <div class="text-[12px] font-semibold text-slate-300 mb-1">💾 Estado Completo (JSON)</div>
+                    <div class="text-[11px] text-slate-400 mb-2">Guarda TODO: cartera, trades, señales, config, API keys... Cárgalo en cualquier navegador.</div>
+                    <button onclick="exportFullState()" class="w-full py-2 rounded-lg bg-blue-600/20 border border-blue-600/30 text-blue-400 text-xs font-semibold hover:bg-blue-600/30 transition">💾 Guardar Progreso (.json)</button>
+                </div>
+                <div class="p-3 rounded-lg bg-slate-800/70 border border-slate-800/40">
+                    <div class="text-[12px] font-semibold text-slate-300 mb-1">📂 Cargar Estado Completo</div>
+                    <div class="text-[11px] text-slate-400 mb-2">Restaura tu cartera y configuración desde un archivo .json</div>
+                    <button onclick="document.getElementById('import-file-modal').click()" class="w-full py-2 rounded-lg bg-violet-600/20 border border-violet-600/30 text-violet-400 text-xs font-semibold hover:bg-violet-600/30 transition">📂 Cargar Progreso (.json)</button>
+                    <input type="file" id="import-file-modal" accept=".json" class="hidden" onchange="importFullState(this)">
+                </div>
+                <div class="divider my-2"></div>
+                <div class="p-3 rounded-lg bg-slate-800/70 border border-slate-800/40">
                     <div class="text-[12px] font-semibold text-slate-300 mb-1">Historial de Trades</div>
                     <div class="text-[11px] text-slate-400 mb-2">Exporta todas tus operaciones cerradas a CSV</div>
                     <button onclick="exportTradesCSV()" class="w-full py-2 rounded-lg bg-emerald-600/20 border border-emerald-600/30 text-emerald-400 text-xs font-semibold hover:bg-emerald-600/30 transition">📄 Descargar trades.csv</button>
@@ -1356,15 +1397,15 @@
                 </div>
                 <div class="p-3 rounded-lg bg-slate-800/70 border border-slate-800/40">
                     <div class="text-[12px] font-semibold text-slate-300 mb-1">Exportar Todo</div>
-                    <div class="text-[11px] text-slate-400 mb-2">Descarga los 3 archivos a la vez</div>
-                    <button onclick="exportAll()" class="w-full py-2 rounded-lg bg-amber-600/20 border border-amber-600/30 text-amber-400 text-xs font-semibold hover:bg-amber-600/30 transition">📦 Descargar todo</button>
+                    <div class="text-[11px] text-slate-400 mb-2">Descarga los 3 archivos CSV a la vez</div>
+                    <button onclick="exportAll()" class="w-full py-2 rounded-lg bg-amber-600/20 border border-amber-600/30 text-amber-400 text-xs font-semibold hover:bg-amber-600/30 transition">📦 Descargar todo CSV</button>
                 </div>
             </div>
         </div>
     </div>
 
     <script>
-    // ==================== CONFIGURACIÓN v4.7 ====================
+    // ==================== CONFIGURACIÓN v4.8 ====================
     let CONFIG = {
         initialCapital: 10000,
         riskPerTrade: 0.10,
@@ -1846,7 +1887,6 @@
         const now = Math.floor(Date.now() / 1000);
         const intervalSeconds = interval === '15m' ? 900 : interval === '1h' ? 3600 : interval === '4h' ? 14400 : 86400;
         const candles = []; let price = basePrice;
-        // Semilla basada en símbolo + intervalo para consistencia
         const seedBase = cleanSymbol.split('').reduce((a, c) => a + c.charCodeAt(0), 0) + interval.length * 1000;
         for (let i = count; i >= 0; i--) {
             const time = now - (i * intervalSeconds);
@@ -2019,7 +2059,6 @@
         if (rsi === null || rsi === undefined || macdHist === null || macdHist === undefined || !ema200 || !atr || adx === null || adx === undefined) return null;
         const pattern = detectCandlePattern(candles, i); const rsiDivergence = detectDivergence(candles, indicators.rsi, 25);
         const volRatio = volMA > 0 ? volume / volMA : 1; let score = 0, reasons = [], type = null; let mtfAligned = true;
-        // MTF check - usar datos guardados o inferir
         if (state.mtfData) { const currentTrend = price > ema200 ? 'ALCISTA' : 'BAJISTA'; if (state.mtfData.trend4h && state.mtfData.trend4h !== currentTrend) mtfAligned = false; if (state.mtfData.trend1d && state.mtfData.trend1d !== currentTrend) mtfAligned = false; }
         if (adx < CONFIG.maxADXForRange && !pattern) return null;
         const bullishConditions = [];
@@ -2449,7 +2488,77 @@
         closeSettings(); updatePortfolioUI(); saveState(); addAlert('info', 'Configuración guardada', 'Nuevos parámetros aplicados', null);
     }
 
-    // ==================== EXPORTAR ====================
+    // ==================== EXPORTAR / IMPORTAR ESTADO COMPLETO ====================
+    function exportFullState() {
+        const payload = {
+            version: '4.8',
+            exportedAt: new Date().toISOString(),
+            config: CONFIG,
+            portfolio: state.portfolio,
+            signals: state.signals,
+            alerts: state.alerts,
+            newsApiKey: getNewsApiKey(),
+            pushEnabled: state.pushEnabled,
+            autoMode: state.autoMode,
+            theme: CONFIG.theme
+        };
+        const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+        const link = document.createElement('a');
+        link.href = URL.createObjectURL(blob);
+        link.download = 'cryptosignal_backup_' + new Date().toISOString().slice(0,10) + '.json';
+        link.click();
+        addAlert('info', 'Backup guardado', 'Tu progreso completo se ha descargado. Cárgalo en cualquier navegador.', null);
+    }
+
+    function importFullState(input) {
+        const file = input.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                if (!data.version || !data.portfolio) {
+                    alert('Archivo inválido. Asegúrate de cargar un backup de CryptoSignal Pro.');
+                    return;
+                }
+                if (!confirm(`¿Restaurar backup del ${new Date(data.exportedAt).toLocaleString('es-ES')}?\n\nEsto reemplazará tu cartera, trades, config y señales actuales.`)) return;
+
+                if (data.config) CONFIG = { ...CONFIG, ...data.config };
+                if (data.portfolio) state.portfolio = data.portfolio;
+                if (data.signals) state.signals = data.signals;
+                if (data.alerts) state.alerts = data.alerts;
+                if (data.newsApiKey) document.getElementById('newsapi-key').value = data.newsApiKey;
+                if (data.pushEnabled !== undefined) state.pushEnabled = data.pushEnabled;
+                if (data.autoMode !== undefined) state.autoMode = data.autoMode;
+                if (data.theme) {
+                    CONFIG.theme = data.theme;
+                    document.documentElement.setAttribute('data-theme', data.theme);
+                    updateThemeIcon();
+                }
+
+                // Update UI
+                updatePortfolioUI();
+                renderPositions();
+                renderTradesTable();
+                renderBotSignals();
+                renderAlerts();
+                renderStats();
+                saveState();
+
+                // Update toggles
+                if (state.pushEnabled) { document.getElementById('push-toggle').classList.add('on'); document.getElementById('push-status-label').textContent = 'Activado'; }
+                if (state.autoMode) { document.getElementById('mode-toggle').classList.add('on'); document.getElementById('mode-label').textContent = 'Automático'; document.getElementById('mode-dot').className = 'pulse-dot purple'; document.getElementById('mode-text').textContent = 'Auto'; document.getElementById('mode-badge').textContent = 'AUTO'; document.getElementById('mode-badge').style.cssText = 'background:rgba(139,92,246,0.1);color:#c084fc;border:1px solid rgba(139,92,246,0.15)'; document.getElementById('manual-panel').classList.add('hidden'); document.getElementById('auto-panel').classList.remove('hidden'); }
+
+                addAlert('info', 'Backup cargado', `Cartera restaurada: ${formatPrice(state.portfolio.available + getPositionsValue(), state.assetType)} | Trades: ${state.portfolio.trades.length}`, null);
+            } catch (err) {
+                alert('Error al leer el archivo: ' + err.message);
+            }
+        };
+        reader.readAsText(file);
+        input.value = '';
+    }
+
+    // ==================== EXPORTAR CSVs ====================
     function openExport() { document.getElementById('export-modal').classList.remove('hidden'); }
     function closeExport() { document.getElementById('export-modal').classList.add('hidden'); }
     function downloadCSV(filename, rows) {
@@ -2471,7 +2580,7 @@
         const rows = [['Index', 'Equity', 'Timestamp']]; state.portfolio.equityHistory.forEach((eq, i) => rows.push([i, eq, new Date().toISOString()]));
         downloadCSV('equity_' + new Date().toISOString().slice(0,10) + '.csv', rows); addAlert('info', 'Exportación completada', 'Equity exportado a CSV', null);
     }
-    function exportAll() { exportTradesCSV(); setTimeout(() => exportSignalsCSV(), 500); setTimeout(() => exportEquityCSV(), 1000); addAlert('info', 'Exportación masiva', 'Todos los datos exportados', null); }
+    function exportAll() { exportTradesCSV(); setTimeout(() => exportSignalsCSV(), 500); setTimeout(() => exportEquityCSV(), 1000); addAlert('info', 'Exportación masiva', 'Todos los datos CSV exportados', null); }
 
     // ==================== PERSISTENCIA ====================
     let ramStorage = null;
@@ -2511,7 +2620,7 @@
     function toggleFullscreen() { if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {}); else document.exitFullscreen().catch(() => {}); }
 
     // =======================================================================
-    // NEWSAPI.ORG + RSS INTERNACIONAL + TRADUCCIÓN AL ESPAÑOL (v4.7)
+    // NEWSAPI.ORG + RSS INTERNACIONAL + TRADUCCIÓN AL ESPAÑOL (v4.8)
     // =======================================================================
 
     function getNewsApiKey() { return document.getElementById('newsapi-key').value.trim(); }
@@ -2985,12 +3094,9 @@
             }
         }
 
-        // Build matrix grid
         let html = '';
-        // Header row
         html += '<div class="corr-v2-row-label"></div>';
         assets.forEach(a => html += `<div class="corr-v2-label">${a}</div>`);
-        // Data rows
         assets.forEach(row => {
             html += `<div class="corr-v2-row-label">${row}</div>`;
             assets.forEach(col => {
@@ -3010,7 +3116,6 @@
         });
         matrix.innerHTML = html;
 
-        // Bar chart
         const barContainer = document.getElementById('correlation-bar-chart');
         const avgCorrs = assets.map(asset => {
             let sum = 0, count = 0;
@@ -3118,7 +3223,7 @@
     setInterval(updatePrices, isMobileDevice ? 15000 : (state.assetType === 'crypto' ? 10000 : 30000));
     setInterval(() => { if (!state.isLoading) refreshData(); }, isMobileDevice ? 600000 : (state.interval === '15m' ? 180000 : 300000));
     setInterval(() => { refreshIntel(); }, 120000);
-    setInterval(() => { refreshMultiSignals(); }, 300000); // Multi-asset signals cada 5 min
+    setInterval(() => { refreshMultiSignals(); }, 300000);
     window.addEventListener('orientationchange', () => { setTimeout(() => { if (state.chart) state.chart.applyOptions({ width: document.getElementById('chart-container').clientWidth }); }, 300); });
     </script>
 </body>
