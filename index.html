@@ -11,6 +11,7 @@
     <title>CryptoSignal Pro v4.8 - Trading Simulator</title>
     <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script>
         tailwind.config = {
@@ -499,7 +500,6 @@
             color: #92400e;
         }
 
-        /* ===== CORRELATION MATRIX v2 ===== */
         .corr-v2-container {
             display: flex;
             flex-direction: column;
@@ -659,7 +659,6 @@
             border-color: rgba(239, 68, 68, 0.2);
         }
 
-        /* Multi-asset signals panel */
         .multi-signal-card {
             background: linear-gradient(135deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.6));
             border: 1px solid rgba(148, 163, 184, 0.08);
@@ -681,7 +680,6 @@
             box-shadow: 0 0 20px rgba(59, 130, 246, 0.08);
         }
 
-        /* Sync banner */
         .sync-banner {
             background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(139, 92, 246, 0.1));
             border: 1px solid rgba(59, 130, 246, 0.25);
@@ -739,9 +737,8 @@
     </header>
 
     <main class="max-w-[1500px] mx-auto px-4 py-4 space-y-4">
-        <!-- SYNC BANNER -->
         <div class="sync-banner" id="sync-banner">
-            <svg class="w-5 h-5 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"/></svg>
+            <svg class="w-5 h-5 text-blue-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4 4"/></svg>
             <div class="flex-1 min-w-0">
                 <div class="text-[12px] font-semibold text-blue-300">💡 Sincronización entre dispositivos</div>
                 <div class="text-[11px] text-slate-400 mt-0.5">Los datos se guardan solo en este navegador. Usa <strong>Guardar Progreso</strong> para llevar tu cartera a otro dispositivo.</div>
@@ -812,7 +809,6 @@
             <button onclick="switchToCrypto()" class="underline hover:text-white ml-1">Cambiar a BTC →</button>
         </div>
 
-        <!-- ===== MULTI-ASSET SIGNALS PANEL ===== -->
         <div class="glass rounded-2xl p-4">
             <div class="flex items-center justify-between mb-3">
                 <div class="flex items-center gap-3">
@@ -1151,17 +1147,22 @@
                         <div class="text-[10px] text-slate-500 mt-1">Pega tu URL de webhook de Telegram aquí</div>
                     </div>
                     <div class="p-3 rounded-lg bg-slate-900/50 border border-slate-700/40">
-                        <div class="text-[11px] text-slate-500 mb-2">Email simulado</div>
-                        <input type="email" id="email-alert" placeholder="tu@email.com" class="input-trade w-full rounded-lg px-3 py-2 text-[11px]">
-                        <div class="text-[10px] text-slate-500 mt-1">Se mostrará en el centro de alertas</div>
+                        <div class="text-[11px] text-slate-500 mb-2 font-semibold">📧 Configurar Email Real (EmailJS)</div>
+                        <input type="email" id="email-alert" placeholder="tu@email.com" class="input-trade w-full rounded-lg px-3 py-2 text-[11px] mb-2">
+                        <input type="text" id="emailjs-service" placeholder="Service ID de EmailJS" class="input-trade w-full rounded-lg px-3 py-2 text-[11px] mb-2 mono">
+                        <input type="text" id="emailjs-template" placeholder="Template ID de EmailJS" class="input-trade w-full rounded-lg px-3 py-2 text-[11px] mb-2 mono">
+                        <input type="text" id="emailjs-publickey" placeholder="Public Key de EmailJS" class="input-trade w-full rounded-lg px-3 py-2 text-[11px] mb-2 mono">
+                        <div class="flex gap-2">
+                            <button onclick="initEmailJS()" class="flex-1 py-1.5 rounded-lg bg-blue-600/20 border border-blue-600/30 text-blue-400 text-[10px] font-semibold hover:bg-blue-600/30 transition">🔌 Conectar EmailJS</button>
+                            <button onclick="testEmail()" class="flex-1 py-1.5 rounded-lg bg-emerald-600/20 border border-emerald-600/30 text-emerald-400 text-[10px] font-semibold hover:bg-emerald-600/30 transition">🧪 Probar</button>
+                        </div>
+                        <div id="emailjs-status" class="text-[10px] mt-2 text-slate-500">Introduce tus credenciales de EmailJS</div>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- TAB: INTELIGENCIA DE MERCADO -->
         <div id="tab-intel" class="p-4 hidden">
-            <!-- API Key NewsAPI -->
             <div class="mb-4 p-3 rounded-xl bg-slate-900/50 border border-slate-700/40">
                 <div class="flex flex-col md:flex-row md:items-center gap-3">
                     <div class="flex-1">
@@ -1176,7 +1177,6 @@
                 <div id="newsapi-status" class="text-[10px] mt-2 text-slate-500"></div>
             </div>
 
-            <!-- Push Notifications Toggle -->
             <div class="mb-4 p-3 rounded-xl bg-slate-900/50 border border-slate-700/40">
                 <div class="flex items-center justify-between">
                     <div>
@@ -1190,14 +1190,12 @@
                 </div>
             </div>
 
-            <!-- Tabs de noticias -->
             <div class="flex items-center gap-1 mb-4 border-b border-slate-700/40 pb-2">
                 <button class="tab-btn active" onclick="switchNewsTab('global')" data-news-tab="global">🌍 Noticias Globales</button>
                 <button class="tab-btn" onclick="switchNewsTab('national')" data-news-tab="national">🇪🇸 Noticias Nacionales</button>
                 <button class="tab-btn" onclick="switchNewsTab('demo')" data-news-tab="demo">📰 Noticias Demo</button>
             </div>
 
-            <!-- Fuentes y estado -->
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center gap-3">
                     <span class="section-title" id="intel-section-title">🧠 Inteligencia de Mercado Global</span>
@@ -1213,7 +1211,6 @@
                 </div>
             </div>
 
-            <!-- Sentimiento por activo -->
             <div class="mb-5">
                 <span class="section-title block mb-3">Sentimiento Global en Tiempo Real</span>
                 <div class="grid grid-cols-2 md:grid-cols-5 gap-3" id="sentiment-grid">
@@ -1245,7 +1242,6 @@
                 </div>
             </div>
 
-            <!-- Correlación de Sentimiento v2 -->
             <div class="mb-5">
                 <span class="section-title block mb-3">📊 Correlación de Sentimiento Global</span>
                 <div class="glass rounded-xl p-4">
@@ -1272,7 +1268,6 @@
                 </div>
             </div>
 
-            <!-- Noticias -->
             <div class="mb-5">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-3">
@@ -1291,7 +1286,6 @@
                 </div>
             </div>
 
-            <!-- Calendario Económico -->
             <div class="mb-5">
                 <span class="section-title block mb-3">📅 Calendario Económico Global</span>
                 <div id="economic-calendar" class="space-y-2 max-h-[300px] overflow-y-auto scroll-hide">
@@ -1299,7 +1293,6 @@
                 </div>
             </div>
 
-            <!-- Eventos Geopolíticos & Macro -->
             <div>
                 <span class="section-title block mb-3">🌍 Eventos de Alto Impacto Global</span>
                 <div id="macro-events" class="grid grid-cols-1 md:grid-cols-2 gap-3"></div>
@@ -1312,7 +1305,6 @@
         <p class="mt-1">BTC/ETH/SOL: datos reales vía Binance | SPY/AAPL: simulación cuando Yahoo no disponible | Noticias: NewsAPI.org + RSS internacional traducido al español</p>
     </footer>
 
-    <!-- Modal Configuración -->
     <div id="settings-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeSettings()">
         <div class="modal-content">
             <div class="flex items-center justify-between mb-4">
@@ -1360,7 +1352,6 @@
         </div>
     </div>
 
-    <!-- Modal Exportar -->
     <div id="export-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeExport()">
         <div class="modal-content">
             <div class="flex items-center justify-between mb-4">
@@ -1405,7 +1396,6 @@
     </div>
 
     <script>
-    // ==================== CONFIGURACIÓN v4.8 ====================
     let CONFIG = {
         initialCapital: 10000,
         riskPerTrade: 0.10,
@@ -1472,7 +1462,6 @@
         { symbol: 'AAPL', type: 'stock', name: 'AAPL', label: 'Apple' }
     ];
 
-    // ==================== SEEDED RANDOM (datos estables) ====================
     function seededRandom(seed) {
         let s = seed % 2147483647;
         if (s <= 0) s += 2147483646;
@@ -1482,7 +1471,6 @@
         };
     }
 
-    // ==================== TEMA ====================
     function initTheme() {
         const saved = localStorage.getItem('theme') || 'dark';
         CONFIG.theme = saved;
@@ -1510,7 +1498,6 @@
         if (icon) icon.textContent = CONFIG.theme === 'dark' ? '☀️' : '🌙';
     }
 
-    // ==================== AUDIO ====================
     let audioCtx = null;
     function getAudioCtx() {
         if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1574,7 +1561,6 @@
         document.getElementById('sound-btn').classList.toggle('text-slate-400', !state.soundEnabled);
     }
 
-    // ==================== PUSH NOTIFICATIONS ====================
     async function togglePushNotifications() {
         const toggle = document.getElementById('push-toggle');
         const label = document.getElementById('push-status-label');
@@ -1624,7 +1610,6 @@
         }
     }
 
-    // ==================== UTILIDADES ====================
     function formatPrice(price, assetType) {
         if (price === null || price === undefined || isNaN(price)) return '--';
         const fmt = (n, min, max) => '$' + n.toLocaleString('es-ES', {minimumFractionDigits: min, maximumFractionDigits: max});
@@ -1656,7 +1641,6 @@
         return mins + 'm';
     }
 
-    // ==================== ALERTAS ====================
     function addAlert(type, title, message, data) {
         const alert = { id: Date.now(), type, title, message, timestamp: Date.now(), data };
         state.alerts.unshift(alert);
@@ -1684,12 +1668,86 @@
             setTimeout(() => toast.remove(), 400);
         }, 5000);
     }
+
+    // ==================== EMAILJS INTEGRATION ====================
+    let emailjsReady = false;
+
+    function initEmailJS() {
+        const publicKey = document.getElementById('emailjs-publickey').value.trim();
+        if (!publicKey) {
+            document.getElementById('emailjs-status').textContent = '❌ Falta la Public Key';
+            document.getElementById('emailjs-status').className = 'text-[10px] mt-2 text-red-400';
+            return;
+        }
+        try {
+            emailjs.init(publicKey);
+            emailjsReady = true;
+            document.getElementById('emailjs-status').textContent = '✅ EmailJS conectado correctamente';
+            document.getElementById('emailjs-status').className = 'text-[10px] mt-2 text-emerald-400';
+            saveState();
+        } catch (e) {
+            document.getElementById('emailjs-status').textContent = '❌ Error al conectar: ' + e.message;
+            document.getElementById('emailjs-status').className = 'text-[10px] mt-2 text-red-400';
+        }
+    }
+
+    function sendEmailAlert(alert) {
+        const email = document.getElementById('email-alert').value.trim();
+        const service = document.getElementById('emailjs-service').value.trim();
+        const template = document.getElementById('emailjs-template').value.trim();
+
+        if (!email || !service || !template || !emailjsReady) return;
+
+        const params = {
+            to_email: email,
+            from_name: 'CryptoSignal Pro',
+            subject: '🤖 ' + alert.title,
+            message: `[${new Date(alert.timestamp).toLocaleString('es-ES')}]
+
+${alert.title}
+
+${alert.message}
+
+---
+CryptoSignal Pro v4.8`
+        };
+
+        emailjs.send(service, template, params)
+            .then(() => {
+                console.log('[EMAIL REAL ENVIADO] a', email);
+                addAlert('info', 'Email enviado', 'Señal enviada a ' + email, null);
+            })
+            .catch(err => {
+                console.error('[EMAIL ERROR]', err);
+                document.getElementById('emailjs-status').textContent = '⚠️ Error enviando: ' + (err.text || err.message);
+                document.getElementById('emailjs-status').className = 'text-[10px] mt-2 text-amber-400';
+            });
+    }
+
+    function testEmail() {
+        const email = document.getElementById('email-alert').value.trim();
+        if (!email) { alert('Introduce tu email primero'); return; }
+        if (!emailjsReady) { initEmailJS(); if (!emailjsReady) return; }
+
+        const testAlert = {
+            title: 'Prueba de conexión',
+            message: 'Si recibes este email, la configuración de EmailJS funciona correctamente.',
+            timestamp: Date.now()
+        };
+        sendEmailAlert(testAlert);
+    }
+
     function simulateWebhook(alert) {
         const webhook = document.getElementById('telegram-webhook').value;
-        const email = document.getElementById('email-alert').value;
         if (webhook) { console.log('[WEBHOOK SIMULADO] URL:', webhook, 'Payload:', JSON.stringify(alert)); }
-        if (email) { console.log('[EMAIL SIMULADO] Para:', email, 'Asunto:', alert.title, 'Cuerpo:', alert.message); }
+
+        // Enviar email real vía EmailJS cuando hay señal del bot
+        if (alert.type === 'buy' || alert.type === 'sell' || alert.type === 'auto') {
+            sendEmailAlert(alert);
+        }
     }
+    // ==================== END EMAILJS ====================
+
     function renderAlerts() {
         const container = document.getElementById('alerts-list');
         if (state.alerts.length === 0) { container.innerHTML = '<div class="text-center py-8 text-xs text-slate-500">Sin alertas aún</div>'; return; }
@@ -1707,7 +1765,6 @@
     }
     function clearAlerts() { state.alerts = []; renderAlerts(); }
 
-    // ==================== FETCH ====================
     async function fetchWithRetry(url, options = {}, maxRetries = 2, timeoutMs = 10000) {
         for (let i = 0; i < maxRetries; i++) {
             try {
@@ -1722,7 +1779,6 @@
         throw new Error('Todos los intentos fallaron');
     }
 
-    // ==================== INDICADORES ====================
     function calculateEMA(data, period) {
         if (!data || data.length < period) return new Array(data?.length || 0).fill(null);
         const ema = []; const k = 2 / (period + 1); let prevEma = data[0].close;
@@ -1876,7 +1932,6 @@
         return null;
     }
 
-    // ==================== DATOS SIMULADOS ESTABLES ====================
     const MOCK_BASE_PRICES = { 'SPY': 575, 'AAPL': 225, 'BTC': 67500, 'ETH': 3450, 'SOL': 145 };
     const MOCK_VOLATILITY = { 'SPY': 0.003, 'AAPL': 0.005, 'BTC': 0.008, 'ETH': 0.01, 'SOL': 0.012 };
 
@@ -1912,7 +1967,6 @@
         return { lastPrice: price.toFixed(2), priceChangePercent: change.toFixed(2), highPrice: high.toFixed(2), lowPrice: low.toFixed(2), volume: Math.floor(5000000 + rand() * 10000000).toString() };
     }
 
-    // ==================== DATOS ====================
     async function fetchBinanceKlines(symbol, interval, limit = 400) {
         const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
         try {
@@ -1964,7 +2018,6 @@
         } catch (e) { console.warn('Yahoo ticker falló, usando simulado para', symbol); state.usingMock = true; return generateMockTicker(symbol); }
     }
 
-    // ==================== GRÁFICO ====================
     function initChart() {
         const container = document.getElementById('chart-container');
         container.innerHTML = '';
@@ -2015,7 +2068,6 @@
         ctx.fillStyle = grad; ctx.fill();
     }
 
-    // ==================== MTF ====================
     async function fetchMTFData() {
         try {
             let candles4h, candles1d;
@@ -2048,7 +2100,6 @@
         }
     }
 
-    // ==================== ANÁLISIS SEÑALES ====================
     function analyzeSignal(candles, indicators, symbol, interval) {
         if (!candles || candles.length < 50 || !indicators) return null;
         const i = candles.length - 1; const price = candles[i].close;
@@ -2099,7 +2150,6 @@
         return { type, score: Math.min(score, 100), price, stopLoss, target, risk: risk.toFixed(2), reward: reward.toFixed(2), reasons, timestamp: Date.now(), symbol, interval, rsi, adx: adx || 0, volRatio: volRatio.toFixed(2), pattern: pattern ? pattern.name : null, divergence: rsiDivergence ? rsiDivergence.description : null, mtfAligned };
     }
 
-    // ==================== MULTI-ASSET BOT ====================
     async function analyzeAssetForSignal(asset) {
         try {
             let candles;
@@ -2171,7 +2221,6 @@
         refreshData();
     }
 
-    // ==================== TRADING ====================
     function placeOrder(direction, autoAmount) {
         const amount = autoAmount || (parseFloat(document.getElementById('order-amount').value) || 1000);
         const slPct = parseFloat(document.getElementById('order-sl').value) || 2.0;
@@ -2235,7 +2284,6 @@
         return (pos.entryPrice - state.currentPrice) * pos.quantity - pos.commission - pos.slippage;
     }
 
-    // ==================== MODO AUTO ====================
     function toggleTradingMode() {
         state.autoMode = !state.autoMode;
         const toggle = document.getElementById('mode-toggle'); const label = document.getElementById('mode-label');
@@ -2264,7 +2312,6 @@
         addAlert('auto', 'Operación automática', `${signal.type} ${state.symbol.replace('USDT','')} @ ${formatPrice(signal.price, state.assetType)} | Fuerza: ${signal.score}`, signal);
     }
 
-    // ==================== UI ====================
     function updatePortfolioUI() {
         const pf = state.portfolio; const posValue = getPositionsValue(); const totalEquity = pf.available + posValue;
         const totalPnl = totalEquity - CONFIG.initialCapital; const totalPnlPct = CONFIG.initialCapital > 0 ? (totalPnl / CONFIG.initialCapital * 100).toFixed(2) : '0,00';
@@ -2412,7 +2459,6 @@
         document.getElementById('strength-value').textContent = '--'; document.getElementById('strength-bar').style.width = '0%';
     }
 
-    // ==================== PRECIO ====================
     async function updatePrices() {
         try {
             let ticker; if (state.assetType === 'crypto') ticker = await fetchBinanceTicker(state.symbol); else ticker = await fetchYahooQuote(state.symbol);
@@ -2430,7 +2476,6 @@
         }
     }
 
-    // ==================== CICLO PRINCIPAL ====================
     async function refreshData() {
         if (state.isLoading) return; state.isLoading = true; document.getElementById('chart-loading').style.display = 'flex'; showStockWarning();
         try {
@@ -2461,7 +2506,6 @@
         state.isLoading = false; document.getElementById('chart-loading').style.display = 'none';
     }
 
-    // ==================== TABS ====================
     function switchTab(tabName) {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('[data-tab]').forEach(b => { if (b.dataset.tab === tabName) b.classList.add('active'); });
@@ -2469,7 +2513,6 @@
         if (tabName === 'stats') renderStats(); if (tabName === 'signals') renderBotSignals(); if (tabName === 'alerts') renderAlerts(); if (tabName === 'intel') refreshIntel();
     }
 
-    // ==================== CONFIGURACIÓN ====================
     function openSettings() {
         document.getElementById('settings-modal').classList.remove('hidden');
         document.getElementById('cfg-capital').value = CONFIG.initialCapital; document.getElementById('cfg-risk').value = (CONFIG.riskPerTrade * 100).toFixed(0);
@@ -2488,7 +2531,6 @@
         closeSettings(); updatePortfolioUI(); saveState(); addAlert('info', 'Configuración guardada', 'Nuevos parámetros aplicados', null);
     }
 
-    // ==================== EXPORTAR / IMPORTAR ESTADO COMPLETO ====================
     function exportFullState() {
         const payload = {
             version: '4.8',
@@ -2500,7 +2542,11 @@
             newsApiKey: getNewsApiKey(),
             pushEnabled: state.pushEnabled,
             autoMode: state.autoMode,
-            theme: CONFIG.theme
+            theme: CONFIG.theme,
+            emailAlert: document.getElementById('email-alert').value,
+            emailjsService: document.getElementById('emailjs-service').value,
+            emailjsTemplate: document.getElementById('emailjs-template').value,
+            emailjsPublicKey: document.getElementById('emailjs-publickey').value
         };
         const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
         const link = document.createElement('a');
@@ -2535,8 +2581,11 @@
                     document.documentElement.setAttribute('data-theme', data.theme);
                     updateThemeIcon();
                 }
+                if (data.emailAlert) document.getElementById('email-alert').value = data.emailAlert;
+                if (data.emailjsService) document.getElementById('emailjs-service').value = data.emailjsService;
+                if (data.emailjsTemplate) document.getElementById('emailjs-template').value = data.emailjsTemplate;
+                if (data.emailjsPublicKey) document.getElementById('emailjs-publickey').value = data.emailjsPublicKey;
 
-                // Update UI
                 updatePortfolioUI();
                 renderPositions();
                 renderTradesTable();
@@ -2545,7 +2594,6 @@
                 renderStats();
                 saveState();
 
-                // Update toggles
                 if (state.pushEnabled) { document.getElementById('push-toggle').classList.add('on'); document.getElementById('push-status-label').textContent = 'Activado'; }
                 if (state.autoMode) { document.getElementById('mode-toggle').classList.add('on'); document.getElementById('mode-label').textContent = 'Automático'; document.getElementById('mode-dot').className = 'pulse-dot purple'; document.getElementById('mode-text').textContent = 'Auto'; document.getElementById('mode-badge').textContent = 'AUTO'; document.getElementById('mode-badge').style.cssText = 'background:rgba(139,92,246,0.1);color:#c084fc;border:1px solid rgba(139,92,246,0.15)'; document.getElementById('manual-panel').classList.add('hidden'); document.getElementById('auto-panel').classList.remove('hidden'); }
 
@@ -2558,7 +2606,6 @@
         input.value = '';
     }
 
-    // ==================== EXPORTAR CSVs ====================
     function openExport() { document.getElementById('export-modal').classList.remove('hidden'); }
     function closeExport() { document.getElementById('export-modal').classList.add('hidden'); }
     function downloadCSV(filename, rows) {
@@ -2582,12 +2629,23 @@
     }
     function exportAll() { exportTradesCSV(); setTimeout(() => exportSignalsCSV(), 500); setTimeout(() => exportEquityCSV(), 1000); addAlert('info', 'Exportación masiva', 'Todos los datos CSV exportados', null); }
 
-    // ==================== PERSISTENCIA ====================
     let ramStorage = null;
     function storageAvailable() { try { const test = '__storage_test__'; localStorage.setItem(test, test); localStorage.removeItem(test); return true; } catch (e) { return false; } }
     const hasStorage = storageAvailable();
     function saveState() {
-        const payload = JSON.stringify({ signals: state.signals, alerts: state.alerts, portfolio: state.portfolio, config: CONFIG, autoMode: state.autoMode, newsApiKey: getNewsApiKey(), pushEnabled: state.pushEnabled });
+        const payload = JSON.stringify({
+            signals: state.signals,
+            alerts: state.alerts,
+            portfolio: state.portfolio,
+            config: CONFIG,
+            autoMode: state.autoMode,
+            newsApiKey: getNewsApiKey(),
+            pushEnabled: state.pushEnabled,
+            emailAlert: document.getElementById('email-alert').value,
+            emailjsService: document.getElementById('emailjs-service').value,
+            emailjsTemplate: document.getElementById('emailjs-template').value,
+            emailjsPublicKey: document.getElementById('emailjs-publickey').value
+        });
         if (hasStorage) { try { localStorage.setItem('cryptoSignalsV4', payload); } catch (e) { ramStorage = payload; } } else { ramStorage = payload; }
     }
     function loadState() {
@@ -2598,6 +2656,10 @@
                 if (data.config) { CONFIG = { ...CONFIG, ...data.config }; if (CONFIG.theme) { document.documentElement.setAttribute('data-theme', CONFIG.theme); updateThemeIcon(); } }
                 state.autoMode = data.autoMode || false; state.pushEnabled = data.pushEnabled || false;
                 if (data.newsApiKey) document.getElementById('newsapi-key').value = data.newsApiKey;
+                if (data.emailAlert) document.getElementById('email-alert').value = data.emailAlert;
+                if (data.emailjsService) document.getElementById('emailjs-service').value = data.emailjsService;
+                if (data.emailjsTemplate) document.getElementById('emailjs-template').value = data.emailjsTemplate;
+                if (data.emailjsPublicKey) document.getElementById('emailjs-publickey').value = data.emailjsPublicKey;
                 if (state.pushEnabled) { document.getElementById('push-toggle').classList.add('on'); document.getElementById('push-status-label').textContent = 'Activado'; }
                 if (state.autoMode) { document.getElementById('mode-toggle').classList.add('on'); document.getElementById('mode-label').textContent = 'Automático'; document.getElementById('mode-dot').className = 'pulse-dot purple'; document.getElementById('mode-text').textContent = 'Auto'; document.getElementById('mode-badge').textContent = 'AUTO'; document.getElementById('mode-badge').style.cssText = 'background:rgba(139,92,246,0.1);color:#c084fc;border:1px solid rgba(139,92,246,0.15)'; document.getElementById('manual-panel').classList.add('hidden'); document.getElementById('auto-panel').classList.remove('hidden'); }
                 renderPositions(); renderTradesTable(); renderBotSignals(); renderAlerts(); updatePortfolioUI();
@@ -2611,17 +2673,12 @@
         addAlert('info', 'Simulador reiniciado', 'Capital restaurado a ' + formatPrice(CONFIG.initialCapital, state.assetType), null);
     }
 
-    // ==================== EVENT LISTENERS ====================
     document.getElementById('symbol-select').addEventListener('change', refreshData);
     document.getElementById('interval-select').addEventListener('change', refreshData);
     document.getElementById('order-amount').addEventListener('input', updatePortfolioUI);
     document.getElementById('order-sl').addEventListener('input', updatePortfolioUI);
     document.getElementById('order-tp').addEventListener('input', updatePortfolioUI);
     function toggleFullscreen() { if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {}); else document.exitFullscreen().catch(() => {}); }
-
-    // =======================================================================
-    // NEWSAPI.ORG + RSS INTERNACIONAL + TRADUCCIÓN AL ESPAÑOL (v4.8)
-    // =======================================================================
 
     function getNewsApiKey() { return document.getElementById('newsapi-key').value.trim(); }
     function saveNewsApiKey() {
@@ -2630,7 +2687,6 @@
         document.getElementById('newsapi-status').textContent = '✅ Key guardada. Actualizando noticias globales...'; document.getElementById('newsapi-status').className = 'text-[10px] mt-2 text-emerald-400'; saveState(); refreshIntel();
     }
 
-    // ===== ENDPOINTS NEWSAPI (ES + EN) =====
     const NEWSAPI_ENDPOINTS = [
         { name: 'Crypto ES', q: 'bitcoin OR ethereum OR solana OR criptomonedas OR blockchain OR cripto', lang: 'es', type: 'crypto' },
         { name: 'Mercados ES', q: 'bolsa OR mercados OR Wall Street OR S&P 500 OR Nasdaq OR acciones', lang: 'es', type: 'stocks' },
@@ -2647,7 +2703,6 @@
         { name: 'Crypto Regulation EN', q: 'crypto regulation SEC MiCA Bitcoin ETF approval ban', lang: 'en', type: 'crypto' }
     ];
 
-    // ===== RSS FEEDS INTERNACIONALES =====
     const RSS_FEEDS_INTL = [
         { name: 'Cointelegraph ES', url: 'https://es.cointelegraph.com/rss', type: 'crypto', weight: 1.0, lang: 'es' },
         { name: 'CryptoNoticias', url: 'https://www.criptonoticias.com/feed/', type: 'crypto', weight: 0.95, lang: 'es' },
@@ -2663,7 +2718,6 @@
         { name: 'CoinTelegraph EN', url: 'https://cointelegraph.com/rss', type: 'crypto', weight: 0.9, lang: 'en' }
     ];
 
-    // ===== RSS FUENTES NACIONALES ESPAÑOLAS =====
     const RSS_FEEDS_NATIONAL = [
         { name: 'El País Economía', url: 'https://feeds.elpais.com/mrsss/pages/ep/site/elpais.com/section/economia/portada', type: 'stocks', weight: 1.0, lang: 'es' },
         { name: 'El Mundo Economía', url: 'https://www.elmundo.es/rss/economia.xml', type: 'stocks', weight: 0.95, lang: 'es' },
@@ -2677,7 +2731,6 @@
         { name: 'Bolsamanía', url: 'https://www.bolsamania.com/rss/', type: 'stocks', weight: 0.8, lang: 'es' }
     ];
 
-    // ===== DICCIONARIO DE TRADUCCIÓN EN→ES =====
     const TRANSLATION_DICT = {
         'stock': 'acción', 'stocks': 'acciones', 'market': 'mercado', 'markets': 'mercados',
         'bullish': 'alcista', 'bearish': 'bajista', 'rally': 'repunte', 'surge': 'repunte',
@@ -2711,7 +2764,6 @@
         'forecast': 'previsión', 'target': 'objetivo'
     };
 
-    // ===== PALABRAS CLAVE POR ACTIVO =====
     const MACRO_KEYWORDS = {
         'BTC': ['bitcoin', 'btc', 'crypto', 'sec', 'etf', 'halving', 'mineria', 'satoshi', 'blockchain', 'cripto', 'mining', 'approval', 'spot bitcoin'],
         'ETH': ['ethereum', 'eth', 'vitalik', 'merge', 'pos', 'defi', 'nft', 'layer2', 'sharding', 'staking', 'upgrade', 'dencun'],
@@ -2876,7 +2928,6 @@
         let allNews = [];
         let sourceLabel = '';
 
-        // 1. NewsAPI (ES + EN traducido)
         const key = getNewsApiKey();
         if (key) {
             try {
@@ -2898,7 +2949,6 @@
             }
         }
 
-        // 2. RSS Internacional (ES + EN traducido)
         if (allNews.length === 0 || allNews.length < 15) {
             for (const feed of RSS_FEEDS_INTL) {
                 const items = await fetchRSS(feed);
@@ -2911,7 +2961,6 @@
             }
         }
 
-        // 3. Demo en español (solo si TODO falla)
         if (allNews.length === 0) {
             allNews = generateDemoNewsES();
             sourceLabel = 'Modo demo — Ejemplos en español';
@@ -3072,7 +3121,6 @@
         return 'hace ' + Math.floor(hours / 24) + ' d';
     }
 
-    // ==================== CORRELATION MATRIX v2 ====================
     function renderCorrelationMatrix() {
         const assets = ['BTC', 'ETH', 'SOL', 'SPY', 'AAPL']; const matrix = document.getElementById('correlation-matrix');
         const correlations = {}; assets.forEach(a => correlations[a] = {});
@@ -3138,7 +3186,6 @@
         if (text.includes('ALCISTA')) return 70; if (text.includes('BAJISTA')) return 30; return 50;
     }
 
-    // ==================== CALENDARIO ECONÓMICO ====================
     function generateEconomicCalendar() {
         const now = new Date(); const day = now.getDay(); const date = now.getDate(); const events = [];
         if (day === 1) { events.push({ time: '10:00', title: 'PMI Manufacturero EUR', impact: 'medium', forecast: '47,2', previous: '46,5' }); events.push({ time: '16:00', title: 'ISM Manufacturero EEUU', impact: 'high', forecast: '48,5', previous: '48,7' }); }
@@ -3165,7 +3212,6 @@
         }).join('');
     }
 
-    // ==================== EVENTOS MACRO ====================
     function generateMacroEvents() {
         return [
             { icon: '⚔️', title: 'Tensiones geopolíticas', desc: 'Conflictos en Oriente Medio pueden impulsar demanda de activos refugio (oro, BTC).', impact: 'BTC, SPY', risk: 'high' },
@@ -3187,7 +3233,6 @@
         }).join('');
     }
 
-    // ==================== SENTIMIENTO ====================
     function updateSentiment() {
         const assets = [
             { id: 'btc', name: 'BTC', symbol: 'BTCUSDT', type: 'crypto' },
@@ -3217,7 +3262,6 @@
         renderMacroEvents();
     }
 
-    // ==================== INICIO ====================
     initTheme(); initChart(); loadState(); updatePrices(); refreshData(); refreshIntel(); refreshMultiSignals();
     const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     setInterval(updatePrices, isMobileDevice ? 15000 : (state.assetType === 'crypto' ? 10000 : 30000));
