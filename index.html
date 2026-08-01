@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-title" content="CryptoSignal Pro">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="theme-color" content="#02040a">
-    <title>CryptoSignal Pro v4.6 - Trading Simulator</title>
+    <title>CryptoSignal Pro v4.7 - Trading Simulator</title>
     <script src="https://unpkg.com/lightweight-charts@4.1.0/dist/lightweight-charts.standalone.production.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -499,29 +499,131 @@
             color: #92400e;
         }
 
-        .corr-matrix {
-            display: grid;
-            grid-template-columns: repeat(5, 1fr);
-            gap: 4px;
-            max-width: 400px;
+        /* ===== CORRELATION MATRIX v2 ===== */
+        .corr-v2-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 16px;
         }
-        .corr-cell {
+        .corr-v2-matrix {
+            display: grid;
+            grid-template-columns: 60px repeat(5, 1fr);
+            gap: 3px;
+            max-width: 520px;
+            width: 100%;
+        }
+        .corr-v2-cell {
             aspect-ratio: 1;
             display: flex;
             align-items: center;
             justify-content: center;
-            border-radius: 8px;
-            font-size: 11px;
+            border-radius: 10px;
+            font-size: 12px;
             font-weight: 700;
             font-family: 'JetBrains Mono', monospace;
-            transition: transform 0.2s;
+            transition: all 0.3s ease;
+            position: relative;
+            cursor: pointer;
         }
-        .corr-cell:hover { transform: scale(1.1); z-index: 10; }
-        .corr-label {
+        .corr-v2-cell:hover {
+            transform: scale(1.15);
+            z-index: 20;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+        }
+        .corr-v2-cell .tooltip {
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid rgba(148, 163, 184, 0.2);
+            border-radius: 8px;
+            padding: 6px 10px;
             font-size: 10px;
+            white-space: nowrap;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s;
+            z-index: 30;
+            color: #e2e8f0;
+        }
+        [data-theme="light"] .corr-v2-cell .tooltip {
+            background: rgba(255, 255, 255, 0.95);
+            color: #0f172a;
+            border-color: rgba(148, 163, 184, 0.3);
+        }
+        .corr-v2-cell:hover .tooltip {
+            opacity: 1;
+        }
+        .corr-v2-label {
+            font-size: 11px;
             color: var(--text-muted);
             text-align: center;
-            padding: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+        }
+        .corr-v2-row-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding-right: 8px;
+            font-weight: 600;
+        }
+        .corr-v2-legend {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .corr-v2-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: var(--text-secondary);
+        }
+        .corr-v2-legend-dot {
+            width: 14px; height: 14px;
+            border-radius: 4px;
+        }
+        .corr-v2-bar-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            height: 80px;
+            padding: 0 8px;
+        }
+        .corr-v2-bar {
+            flex: 1;
+            border-radius: 4px 4px 0 0;
+            transition: height 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            min-width: 24px;
+        }
+        .corr-v2-bar-label {
+            position: absolute;
+            bottom: -18px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 9px;
+            color: var(--text-muted);
+            white-space: nowrap;
+        }
+        .corr-v2-bar-value {
+            position: absolute;
+            top: -16px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 9px;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            white-space: nowrap;
         }
 
         .theme-toggle {
@@ -556,6 +658,28 @@
             color: #991b1b;
             border-color: rgba(239, 68, 68, 0.2);
         }
+
+        /* Multi-asset signals panel */
+        .multi-signal-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.4), rgba(15, 23, 42, 0.6));
+            border: 1px solid rgba(148, 163, 184, 0.08);
+            border-radius: 12px;
+            padding: 12px 14px;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+        [data-theme="light"] .multi-signal-card {
+            background: linear-gradient(135deg, rgba(241, 245, 249, 0.6), rgba(255, 255, 255, 0.8));
+            border: 1px solid rgba(148, 163, 184, 0.15);
+        }
+        .multi-signal-card:hover {
+            border-color: rgba(59, 130, 246, 0.3);
+            transform: translateY(-1px);
+        }
+        .multi-signal-card.active-signal {
+            border-color: rgba(59, 130, 246, 0.5);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.08);
+        }
     </style>
 </head>
 <body class="min-h-screen">
@@ -566,7 +690,7 @@
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-600 to-violet-700 flex items-center justify-center text-white font-bold text-lg shadow-lg shadow-blue-500/10">CS</div>
                 <div>
-                    <h1 class="font-bold text-[15px] tracking-tight">CryptoSignal Pro <span class="text-[11px] font-normal text-blue-400 ml-1">v4.6</span></h1>
+                    <h1 class="font-bold text-[15px] tracking-tight">CryptoSignal Pro <span class="text-[11px] font-normal text-blue-400 ml-1">v4.7</span></h1>
                     <p class="text-[11px] text-slate-400">Simulador Avanzado Multi-Activo</p>
                 </div>
             </div>
@@ -657,6 +781,29 @@
             ⚠️ <strong>Acciones (SPY/AAPL):</strong> Yahoo Finance bloquea archivos locales. 
             La app usa <strong>datos simulados realistas</strong> automáticamente para que sigas practicando. 
             <button onclick="switchToCrypto()" class="underline hover:text-white ml-1">Cambiar a BTC →</button>
+        </div>
+
+        <!-- ===== MULTI-ASSET SIGNALS PANEL ===== -->
+        <div class="glass rounded-2xl p-4">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-3">
+                    <span class="section-title">🤖 Señales Multi-Activo</span>
+                    <span class="live-badge" id="multi-signal-badge">
+                        <span class="pulse-dot green" style="width:6px;height:6px;"></span>
+                        MONITOREANDO
+                    </span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <span class="text-[10px] text-slate-500" id="multi-signal-count">0 señales activas</span>
+                    <button onclick="refreshMultiSignals()" class="retry-btn">🔄 Actualizar</button>
+                </div>
+            </div>
+            <div id="multi-signals-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                <div class="text-center py-4 text-xs text-slate-500 col-span-full">Analizando todos los activos...</div>
+            </div>
+            <div class="mt-3 p-2.5 rounded-lg bg-slate-900/30 border border-slate-700/20 text-[10px] text-slate-500 text-center">
+                El bot analiza <strong>BTC, ETH, SOL, SPY y AAPL</strong> simultáneamente. Las señales se generan cada 5 minutos independientemente del activo seleccionado.
+            </div>
         </div>
 
         <div class="grid grid-cols-1 xl:grid-cols-4 gap-4">
@@ -853,7 +1000,7 @@
         </div>
 
         <div class="glass rounded-2xl p-1">
-            <div class="flex items-center gap-1 px-3 pt-3 pb-2 border-b border-slate-700/40">
+            <div class="flex items-center gap-1 px-3 pt-3 pb-2 border-b border-slate-700/40 flex-wrap">
                 <button class="tab-btn active" onclick="switchTab('history')" data-tab="history">Historial</button>
                 <button class="tab-btn" onclick="switchTab('stats')" data-tab="stats">Estadísticas</button>
                 <button class="tab-btn" onclick="switchTab('strategy')" data-tab="strategy">Estrategia</button>
@@ -1014,10 +1161,17 @@
                 </div>
             </div>
 
+            <!-- Tabs de noticias -->
+            <div class="flex items-center gap-1 mb-4 border-b border-slate-700/40 pb-2">
+                <button class="tab-btn active" onclick="switchNewsTab('global')" data-news-tab="global">🌍 Noticias Globales</button>
+                <button class="tab-btn" onclick="switchNewsTab('national')" data-news-tab="national">🇪🇸 Noticias Nacionales</button>
+                <button class="tab-btn" onclick="switchNewsTab('demo')" data-news-tab="demo">📰 Noticias Demo</button>
+            </div>
+
             <!-- Fuentes y estado -->
             <div class="flex items-center justify-between mb-4">
                 <div class="flex items-center gap-3">
-                    <span class="section-title">🧠 Inteligencia de Mercado Global</span>
+                    <span class="section-title" id="intel-section-title">🧠 Inteligencia de Mercado Global</span>
                     <span class="live-badge" id="news-live-badge">
                         <span class="pulse-dot red" style="width:6px;height:6px;"></span>
                         EN VIVO
@@ -1062,7 +1216,7 @@
                 </div>
             </div>
 
-            <!-- Correlación de Sentimiento -->
+            <!-- Correlación de Sentimiento v2 -->
             <div class="mb-5">
                 <span class="section-title block mb-3">📊 Correlación de Sentimiento Global</span>
                 <div class="glass rounded-xl p-4">
@@ -1070,13 +1224,21 @@
                         <span class="text-[11px] text-slate-400">Matriz de correlación basada en análisis de noticias internacionales</span>
                         <span class="text-[10px] text-slate-500">Actualizado cada 2 min</span>
                     </div>
-                    <div class="overflow-x-auto">
-                        <div class="corr-matrix mx-auto" id="correlation-matrix"></div>
-                    </div>
-                    <div class="flex justify-center gap-4 mt-3 text-[10px] text-slate-400">
-                        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-emerald-500 inline-block"></span> Positiva</span>
-                        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-slate-600 inline-block"></span> Neutral</span>
-                        <span class="flex items-center gap-1"><span class="w-3 h-3 rounded bg-red-500 inline-block"></span> Negativa</span>
+                    <div class="corr-v2-container">
+                        <div class="overflow-x-auto w-full">
+                            <div class="corr-v2-matrix mx-auto" id="correlation-matrix"></div>
+                        </div>
+                        <div class="corr-v2-legend">
+                            <div class="corr-v2-legend-item"><div class="corr-v2-legend-dot" style="background:linear-gradient(135deg,#10b981,#059669)"></div> Positiva fuerte</div>
+                            <div class="corr-v2-legend-item"><div class="corr-v2-legend-dot" style="background:linear-gradient(135deg,#34d399,#10b981)"></div> Positiva débil</div>
+                            <div class="corr-v2-legend-item"><div class="corr-v2-legend-dot" style="background:#334155"></div> Neutral</div>
+                            <div class="corr-v2-legend-item"><div class="corr-v2-legend-dot" style="background:linear-gradient(135deg,#fb7185,#ef4444)"></div> Negativa débil</div>
+                            <div class="corr-v2-legend-item"><div class="corr-v2-legend-dot" style="background:linear-gradient(135deg,#ef4444,#dc2626)"></div> Negativa fuerte</div>
+                        </div>
+                        <div class="w-full max-w-[400px] mt-2">
+                            <div class="text-[10px] text-slate-500 mb-1 text-center">Correlación promedio por activo</div>
+                            <div class="corr-v2-bar-chart" id="correlation-bar-chart"></div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1085,7 +1247,7 @@
             <div class="mb-5">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-3">
-                        <span class="section-title">📰 Noticias Globales en Vivo</span>
+                        <span class="section-title" id="news-section-title">📰 Noticias Globales en Vivo</span>
                         <span class="text-[10px] text-slate-500" id="news-source-label">Cargando fuentes...</span>
                     </div>
                     <div class="flex gap-2">
@@ -1117,7 +1279,7 @@
     </main>
 
     <footer class="max-w-[1500px] mx-auto px-4 py-6 text-center text-[11px] text-slate-500 border-t border-slate-800/20 mt-4">
-        <p>CryptoSignal Pro v4.6 — Simulador educativo. No conecta con exchanges reales.</p>
+        <p>CryptoSignal Pro v4.7 — Simulador educativo. No conecta con exchanges reales.</p>
         <p class="mt-1">BTC/ETH/SOL: datos reales vía Binance | SPY/AAPL: simulación cuando Yahoo no disponible | Noticias: NewsAPI.org + RSS internacional traducido al español</p>
     </footer>
 
@@ -1202,7 +1364,7 @@
     </div>
 
     <script>
-    // ==================== CONFIGURACIÓN v4.6 ====================
+    // ==================== CONFIGURACIÓN v4.7 ====================
     let CONFIG = {
         initialCapital: 10000,
         riskPerTrade: 0.10,
@@ -1231,6 +1393,7 @@
         indicators: {},
         mtfData: {},
         signals: [],
+        multiAssetSignals: [],
         alerts: [],
         portfolio: {
             capital: CONFIG.initialCapital,
@@ -1253,8 +1416,30 @@
         lastErrorAlertTime: 0,
         stockErrorCount: 0,
         pushEnabled: false,
-        lastNewsIds: new Set()
+        lastNewsIds: new Set(),
+        currentNewsTab: 'global',
+        newsCacheGlobal: [],
+        newsCacheNational: [],
+        newsCacheDemo: []
     };
+
+    const ALL_ASSETS = [
+        { symbol: 'BTCUSDT', type: 'crypto', name: 'BTC', label: 'Bitcoin' },
+        { symbol: 'ETHUSDT', type: 'crypto', name: 'ETH', label: 'Ethereum' },
+        { symbol: 'SOLUSDT', type: 'crypto', name: 'SOL', label: 'Solana' },
+        { symbol: 'SPY', type: 'stock', name: 'SPY', label: 'S&P 500' },
+        { symbol: 'AAPL', type: 'stock', name: 'AAPL', label: 'Apple' }
+    ];
+
+    // ==================== SEEDED RANDOM (datos estables) ====================
+    function seededRandom(seed) {
+        let s = seed % 2147483647;
+        if (s <= 0) s += 2147483646;
+        return function() {
+            s = (s * 16807) % 2147483647;
+            return (s - 1) / 2147483646;
+        };
+    }
 
     // ==================== TEMA ====================
     function initTheme() {
@@ -1650,9 +1835,10 @@
         return null;
     }
 
-    // ==================== DATOS SIMULADOS ====================
+    // ==================== DATOS SIMULADOS ESTABLES ====================
     const MOCK_BASE_PRICES = { 'SPY': 575, 'AAPL': 225, 'BTC': 67500, 'ETH': 3450, 'SOL': 145 };
     const MOCK_VOLATILITY = { 'SPY': 0.003, 'AAPL': 0.005, 'BTC': 0.008, 'ETH': 0.01, 'SOL': 0.012 };
+
     function generateMockCandles(symbol, interval, count = 400) {
         const cleanSymbol = symbol.replace('USDT', '');
         const basePrice = MOCK_BASE_PRICES[cleanSymbol] || 100;
@@ -1660,13 +1846,16 @@
         const now = Math.floor(Date.now() / 1000);
         const intervalSeconds = interval === '15m' ? 900 : interval === '1h' ? 3600 : interval === '4h' ? 14400 : 86400;
         const candles = []; let price = basePrice;
+        // Semilla basada en símbolo + intervalo para consistencia
+        const seedBase = cleanSymbol.split('').reduce((a, c) => a + c.charCodeAt(0), 0) + interval.length * 1000;
         for (let i = count; i >= 0; i--) {
             const time = now - (i * intervalSeconds);
-            const change = (Math.random() - 0.5) * volatility * 2;
+            const rand = seededRandom(seedBase + i + Math.floor(time / 86400));
+            const change = (rand() - 0.5) * volatility * 2;
             const open = price; const close = price * (1 + change);
-            const high = Math.max(open, close) * (1 + Math.random() * volatility);
-            const low = Math.min(open, close) * (1 - Math.random() * volatility);
-            const volume = Math.floor((1000000 + Math.random() * 5000000) * (intervalSeconds / 3600));
+            const high = Math.max(open, close) * (1 + rand() * volatility);
+            const low = Math.min(open, close) * (1 - rand() * volatility);
+            const volume = Math.floor((1000000 + rand() * 5000000) * (intervalSeconds / 3600));
             candles.push({ time, open, high, low, close, volume }); price = close;
         }
         return candles;
@@ -1675,10 +1864,12 @@
         const cleanSymbol = symbol.replace('USDT', '');
         const basePrice = MOCK_BASE_PRICES[cleanSymbol] || 100;
         const volatility = MOCK_VOLATILITY[cleanSymbol] || 0.004;
-        const change = (Math.random() - 0.5) * volatility * 100;
+        const seed = cleanSymbol.split('').reduce((a, c) => a + c.charCodeAt(0), 0) + Math.floor(Date.now() / 60000);
+        const rand = seededRandom(seed);
+        const change = (rand() - 0.5) * volatility * 100;
         const price = basePrice * (1 + change / 100);
-        const high = price * (1 + Math.random() * volatility); const low = price * (1 - Math.random() * volatility);
-        return { lastPrice: price.toFixed(2), priceChangePercent: change.toFixed(2), highPrice: high.toFixed(2), lowPrice: low.toFixed(2), volume: Math.floor(5000000 + Math.random() * 10000000).toString() };
+        const high = price * (1 + rand() * volatility); const low = price * (1 - rand() * volatility);
+        return { lastPrice: price.toFixed(2), priceChangePercent: change.toFixed(2), highPrice: high.toFixed(2), lowPrice: low.toFixed(2), volume: Math.floor(5000000 + rand() * 10000000).toString() };
     }
 
     // ==================== DATOS ====================
@@ -1818,7 +2009,7 @@
     }
 
     // ==================== ANÁLISIS SEÑALES ====================
-    function analyzeSignal(candles, indicators) {
+    function analyzeSignal(candles, indicators, symbol, interval) {
         if (!candles || candles.length < 50 || !indicators) return null;
         const i = candles.length - 1; const price = candles[i].close;
         const rsi = indicators.rsi?.[i]; const macdHist = indicators.macd?.histogram?.[i]; const macdHistPrev = indicators.macd?.histogram?.[i-1] || 0;
@@ -1828,6 +2019,7 @@
         if (rsi === null || rsi === undefined || macdHist === null || macdHist === undefined || !ema200 || !atr || adx === null || adx === undefined) return null;
         const pattern = detectCandlePattern(candles, i); const rsiDivergence = detectDivergence(candles, indicators.rsi, 25);
         const volRatio = volMA > 0 ? volume / volMA : 1; let score = 0, reasons = [], type = null; let mtfAligned = true;
+        // MTF check - usar datos guardados o inferir
         if (state.mtfData) { const currentTrend = price > ema200 ? 'ALCISTA' : 'BAJISTA'; if (state.mtfData.trend4h && state.mtfData.trend4h !== currentTrend) mtfAligned = false; if (state.mtfData.trend1d && state.mtfData.trend1d !== currentTrend) mtfAligned = false; }
         if (adx < CONFIG.maxADXForRange && !pattern) return null;
         const bullishConditions = [];
@@ -1861,11 +2053,83 @@
             if (sellScore >= CONFIG.minSignalStrength && bearishConditions.length >= 4 && mtfAligned) { type = 'SELL'; score = sellScore; reasons = bearishConditions.map(c => c.name); }
         }
         if (!type) return null;
-        const atrMultSL = state.interval === '15m' ? 1.8 : 1.5; const atrMultTP = state.interval === '15m' ? 2.5 : 3.0;
+        const atrMultSL = interval === '15m' ? 1.8 : 1.5; const atrMultTP = interval === '15m' ? 2.5 : 3.0;
         const stopLoss = type === 'BUY' ? price - (atr * atrMultSL) : price + (atr * atrMultSL);
         const target = type === 'BUY' ? price + (atr * atrMultTP) : price - (atr * atrMultTP);
         const risk = Math.abs(price - stopLoss) / price * 100; const reward = Math.abs(target - price) / price * 100;
-        return { type, score: Math.min(score, 100), price, stopLoss, target, risk: risk.toFixed(2), reward: reward.toFixed(2), reasons, timestamp: Date.now(), symbol: state.symbol, interval: state.interval, rsi, adx: adx || 0, volRatio: volRatio.toFixed(2), pattern: pattern ? pattern.name : null, divergence: rsiDivergence ? rsiDivergence.description : null, mtfAligned };
+        return { type, score: Math.min(score, 100), price, stopLoss, target, risk: risk.toFixed(2), reward: reward.toFixed(2), reasons, timestamp: Date.now(), symbol, interval, rsi, adx: adx || 0, volRatio: volRatio.toFixed(2), pattern: pattern ? pattern.name : null, divergence: rsiDivergence ? rsiDivergence.description : null, mtfAligned };
+    }
+
+    // ==================== MULTI-ASSET BOT ====================
+    async function analyzeAssetForSignal(asset) {
+        try {
+            let candles;
+            if (asset.type === 'crypto') candles = await fetchBinanceKlines(asset.symbol, '1h', 200);
+            else candles = await fetchYahooChart(asset.symbol, '1h', '3mo');
+            if (!candles || candles.length < 50) return null;
+            const ema20 = calculateEMA(candles, 20); const ema50 = calculateEMA(candles, 50); const ema200 = calculateEMA(candles, 200);
+            const rsi = calculateRSI(candles, 14); const macd = calculateMACD(candles); const atr = calculateATR(candles, 14);
+            const volumeMA = calculateVolumeMA(candles, 20); const bollinger = calculateBollinger(candles, 20, 2); const adx = calculateADX(candles, 14);
+            const indicators = { ema20, ema50, ema200, rsi, macd, atr, volumeMA, bollinger, adx };
+            const signal = analyzeSignal(candles, indicators, asset.symbol, '1h');
+            if (signal) {
+                signal.assetLabel = asset.label;
+                signal.assetType = asset.type;
+            }
+            return signal;
+        } catch (e) {
+            console.warn('Error analizando', asset.symbol, e.message);
+            return null;
+        }
+    }
+
+    async function refreshMultiSignals() {
+        const container = document.getElementById('multi-signals-container');
+        container.innerHTML = '<div class="text-center py-4 text-xs text-slate-500 col-span-full"><div class="loading-spinner mx-auto mb-2"></div>Analizando todos los activos...</div>';
+        const signals = [];
+        for (const asset of ALL_ASSETS) {
+            const signal = await analyzeAssetForSignal(asset);
+            if (signal) signals.push(signal);
+        }
+        state.multiAssetSignals = signals;
+        renderMultiSignals();
+    }
+
+    function renderMultiSignals() {
+        const container = document.getElementById('multi-signals-container');
+        const signals = state.multiAssetSignals;
+        document.getElementById('multi-signal-count').textContent = signals.length + ' señales activas';
+        if (signals.length === 0) {
+            container.innerHTML = '<div class="text-center py-4 text-xs text-slate-500 col-span-full">Sin señales claras en ningún activo. El bot sigue monitoreando...</div>';
+            return;
+        }
+        container.innerHTML = signals.map(s => {
+            const isBuy = s.type === 'BUY';
+            const colorClass = isBuy ? 'text-emerald-400' : 'text-red-400';
+            const borderClass = isBuy ? 'border-emerald-500/20' : 'border-red-500/20';
+            const bgClass = isBuy ? 'bg-emerald-500/5' : 'bg-red-500/5';
+            const isSelected = s.symbol === state.symbol;
+            return `
+                <div class="multi-signal-card ${borderClass} ${bgClass} ${isSelected ? 'active-signal' : ''}" onclick="selectAsset('${s.symbol}')">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="font-bold text-[13px] ${colorClass}">${s.assetLabel}</span>
+                        <span class="tag ${isBuy ? 'tag-green' : 'tag-red'}">${s.type}</span>
+                    </div>
+                    <div class="text-[12px] mono font-semibold text-slate-300">${formatPrice(s.price, s.assetType)}</div>
+                    <div class="flex justify-between mt-1.5 text-[10px] text-slate-400">
+                        <span>Fuerza: <span class="font-bold ${colorClass}">${s.score}</span></span>
+                        <span class="text-slate-500">${s.reasons?.length || 0} razones</span>
+                    </div>
+                    <div class="conf-meter mt-1.5"><div class="fill ${isBuy ? 'bg-emerald-500' : 'bg-red-500'}" style="width:${s.score}%"></div></div>
+                    ${isSelected ? '<div class="text-[9px] text-blue-400 mt-1 text-center font-semibold">📊 ACTIVO SELECCIONADO</div>' : ''}
+                </div>
+            `;
+        }).join('');
+    }
+
+    function selectAsset(symbol) {
+        document.getElementById('symbol-select').value = symbol;
+        refreshData();
     }
 
     // ==================== TRADING ====================
@@ -2149,7 +2413,7 @@
             state.indicators = { ema20, ema50, ema200, rsi, macd, atr, volumeMA, bollinger, adx };
             updateChart(candles, state.indicators); updateIndicatorsUI(state.indicators, candles);
             try { await fetchMTFData(); } catch (e) { console.warn('MTF fetch error:', e); }
-            const signal = analyzeSignal(candles, state.indicators); displayCurrentSignal(signal); if (signal) addSignalToHistory(signal);
+            const signal = analyzeSignal(candles, state.indicators, state.symbol, state.interval); displayCurrentSignal(signal); if (signal) addSignalToHistory(signal);
             document.getElementById('last-update').textContent = new Date().toLocaleTimeString('es-ES'); state.lastError = null; state.retryCount = 0; state.stockErrorCount = 0;
             if (Notification.permission === 'default') Notification.requestPermission();
         } catch (e) {
@@ -2246,9 +2510,9 @@
     document.getElementById('order-tp').addEventListener('input', updatePortfolioUI);
     function toggleFullscreen() { if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {}); else document.exitFullscreen().catch(() => {}); }
 
-    // ========================================================================
-    // NEWSAPI.ORG + RSS INTERNACIONAL + TRADUCCIÓN AL ESPAÑOL (v4.6)
-    // ========================================================================
+    // =======================================================================
+    // NEWSAPI.ORG + RSS INTERNACIONAL + TRADUCCIÓN AL ESPAÑOL (v4.7)
+    // =======================================================================
 
     function getNewsApiKey() { return document.getElementById('newsapi-key').value.trim(); }
     function saveNewsApiKey() {
@@ -2259,13 +2523,11 @@
 
     // ===== ENDPOINTS NEWSAPI (ES + EN) =====
     const NEWSAPI_ENDPOINTS = [
-        // Español
         { name: 'Crypto ES', q: 'bitcoin OR ethereum OR solana OR criptomonedas OR blockchain OR cripto', lang: 'es', type: 'crypto' },
         { name: 'Mercados ES', q: 'bolsa OR mercados OR Wall Street OR S&P 500 OR Nasdaq OR acciones', lang: 'es', type: 'stocks' },
         { name: 'Apple ES', q: 'Apple OR AAPL OR iPhone OR Tim Cook OR tecnología', lang: 'es', type: 'stocks' },
         { name: 'Macro ES', q: 'Reserva Federal OR FED OR inflación OR IPC OR recesión OR PIB OR tipos de interés', lang: 'es', type: 'macro' },
         { name: 'Geopolítica ES', q: 'guerra OR sanciones OR Oriente Medio OR Ucrania OR conflicto OR aranceles', lang: 'es', type: 'macro' },
-        // Inglés (internacional)
         { name: 'Bitcoin EN', q: 'bitcoin BTC ETF halving mining SEC approval', lang: 'en', type: 'crypto' },
         { name: 'Ethereum EN', q: 'ethereum ETH staking DeFi upgrade Vitalik', lang: 'en', type: 'crypto' },
         { name: 'Solana EN', q: 'solana SOL DeFi NFT validator phantom', lang: 'en', type: 'crypto' },
@@ -2278,13 +2540,11 @@
 
     // ===== RSS FEEDS INTERNACIONALES =====
     const RSS_FEEDS_INTL = [
-        // Español
         { name: 'Cointelegraph ES', url: 'https://es.cointelegraph.com/rss', type: 'crypto', weight: 1.0, lang: 'es' },
         { name: 'CryptoNoticias', url: 'https://www.criptonoticias.com/feed/', type: 'crypto', weight: 0.95, lang: 'es' },
         { name: 'El Economista', url: 'https://www.eleconomista.es/rss/rss-mercados.php', type: 'stocks', weight: 0.9, lang: 'es' },
         { name: 'Expansión', url: 'https://expansion.mx/rss/mercados', type: 'stocks', weight: 0.85, lang: 'es' },
         { name: 'BBC Mundo', url: 'https://feeds.bbci.co.uk/mundo/rss.xml', type: 'macro', weight: 0.8, lang: 'es' },
-        // Inglés (internacional)
         { name: 'CoinDesk', url: 'https://www.coindesk.com/arc/outboundfeeds/rss/', type: 'crypto', weight: 1.0, lang: 'en' },
         { name: 'The Block', url: 'https://www.theblock.co/rss.xml', type: 'crypto', weight: 0.95, lang: 'en' },
         { name: 'Reuters Markets', url: 'https://www.reuters.com/markets/rss/', type: 'stocks', weight: 0.95, lang: 'en' },
@@ -2294,9 +2554,22 @@
         { name: 'CoinTelegraph EN', url: 'https://cointelegraph.com/rss', type: 'crypto', weight: 0.9, lang: 'en' }
     ];
 
-    // ===== DICCIONARIO DE TRADUCCIÓN EN→ES (términos financieros) =====
+    // ===== RSS FUENTES NACIONALES ESPAÑOLAS =====
+    const RSS_FEEDS_NATIONAL = [
+        { name: 'El País Economía', url: 'https://feeds.elpais.com/mrsss/pages/ep/site/elpais.com/section/economia/portada', type: 'stocks', weight: 1.0, lang: 'es' },
+        { name: 'El Mundo Economía', url: 'https://www.elmundo.es/rss/economia.xml', type: 'stocks', weight: 0.95, lang: 'es' },
+        { name: 'La Vanguardia Economía', url: 'https://www.lavanguardia.com/rss/economia.xml', type: 'stocks', weight: 0.9, lang: 'es' },
+        { name: 'ABC Economía', url: 'https://www.abc.es/rss/feeds/abc_Economia.xml', type: 'stocks', weight: 0.85, lang: 'es' },
+        { name: 'El Confidencial', url: 'https://rss.elconfidencial.com/mundo/', type: 'macro', weight: 0.9, lang: 'es' },
+        { name: 'Cinco Días', url: 'https://cincodias.elpais.com/cincodias/rss/portada/', type: 'stocks', weight: 0.9, lang: 'es' },
+        { name: 'Invertia', url: 'https://www.invertia.com/rss/mercados', type: 'stocks', weight: 0.85, lang: 'es' },
+        { name: 'El Economista', url: 'https://www.eleconomista.es/rss/rss-mercados.php', type: 'stocks', weight: 0.9, lang: 'es' },
+        { name: 'Expansión', url: 'https://expansion.mx/rss/mercados', type: 'stocks', weight: 0.85, lang: 'es' },
+        { name: 'Bolsamanía', url: 'https://www.bolsamania.com/rss/', type: 'stocks', weight: 0.8, lang: 'es' }
+    ];
+
+    // ===== DICCIONARIO DE TRADUCCIÓN EN→ES =====
     const TRANSLATION_DICT = {
-        // Acciones / Mercados
         'stock': 'acción', 'stocks': 'acciones', 'market': 'mercado', 'markets': 'mercados',
         'bullish': 'alcista', 'bearish': 'bajista', 'rally': 'repunte', 'surge': 'repunte',
         'plunge': 'caída', 'crash': 'colapso', 'rebound': 'recuperación', 'slide': 'descenso',
@@ -2304,37 +2577,32 @@
         'earnings': 'beneficios', 'revenue': 'ingresos', 'profit': 'beneficio', 'dividend': 'dividendo',
         'shares': 'acciones', 'trading': 'trading', 'investor': 'inversor', 'investors': 'inversores',
         'fund': 'fondo', 'ETF': 'ETF', 'index': 'índice', 'futures': 'futuros',
-        // Crypto
         'cryptocurrency': 'criptomoneda', 'cryptocurrencies': 'criptomonedas', 'crypto': 'cripto',
         'blockchain': 'blockchain', 'mining': 'minería', 'halving': 'halving',
         'staking': 'staking', 'DeFi': 'DeFi', 'NFT': 'NFT', 'validator': 'validador',
         'wallet': 'cartera', 'exchange': 'exchange', 'token': 'token', 'altcoin': 'altcoin',
         'whale': 'ballena', 'airdrop': 'airdrop', 'fork': 'fork', 'mainnet': 'mainnet',
-        // Macro
         'Federal Reserve': 'Reserva Federal', 'FOMC': 'FOMC', 'interest rate': 'tipo de interés',
         'inflation': 'inflación', 'recession': 'recesión', 'GDP': 'PIB', 'CPI': 'IPC',
         'unemployment': 'desempleo', 'jobs report': 'informe de empleo', 'NFP': 'NFP',
         'trade war': 'guerra comercial', 'sanctions': 'sanciones', 'tariff': 'arancel',
         'tariffs': 'aranceles', 'supply chain': 'cadena de suministro', 'default': 'default',
-        // Técnico
         'support': 'soporte', 'resistance': 'resistencia', 'breakout': 'ruptura',
         'consolidation': 'consolidación', 'volatility': 'volatilidad', 'liquidity': 'liquidez',
         'leverage': 'apalancamiento', 'short': 'corto', 'long': 'largo', 'liquidation': 'liquidación',
-        // Verbos comunes
         'rises': 'sube', 'falls': 'cae', 'drops': 'cae', 'climbs': 'asciende', 'declines': 'desciende',
         'jumps': 'salta', 'sinks': 'hunde', 'recovers': 'se recupera', 'slides': 'resbala',
         'hits': 'alcanza', 'reaches': 'alcanza', 'exceeds': 'supera', 'tops': 'supera',
         'approves': 'aprueba', 'rejects': 'rechaza', 'delays': 'retrasa', 'bans': 'prohíbe',
         'warns': 'advierte', 'signals': 'señala', 'expects': 'espera', 'forecasts': 'prevé',
-        // Misc
         'amid': 'en medio de', 'despite': 'a pesar de', 'following': 'tras', 'after': 'después de',
         'before': 'antes de', 'during': 'durante', 'amidst': 'en medio de', 'over': 'sobre',
         'due to': 'debido a', 'because of': 'debido a', 'as': 'mientras', 'while': 'mientras',
         'report': 'informe', 'data': 'datos', 'survey': 'encuesta', 'outlook': 'perspectiva',
-        'forecast': 'previsión', 'target': 'objetivo', 'outlook': 'perspectiva'
+        'forecast': 'previsión', 'target': 'objetivo'
     };
 
-    // ===== PALABRAS CLAVE POR ACTIVO (ES + EN) =====
+    // ===== PALABRAS CLAVE POR ACTIVO =====
     const MACRO_KEYWORDS = {
         'BTC': ['bitcoin', 'btc', 'crypto', 'sec', 'etf', 'halving', 'mineria', 'satoshi', 'blockchain', 'cripto', 'mining', 'approval', 'spot bitcoin'],
         'ETH': ['ethereum', 'eth', 'vitalik', 'merge', 'pos', 'defi', 'nft', 'layer2', 'sharding', 'staking', 'upgrade', 'dencun'],
@@ -2372,9 +2640,9 @@
         } catch (e) { console.warn(`Proxy ${proxyIndex} falló:`, e.message); return fetchWithCorsProxy(url, proxyIndex + 1); }
     }
 
-    // ===== SISTEMA DE TRADUCCIÓN =====
     function detectLanguage(text) {
-        const spanishWords = ['el', 'la', 'los', 'las', 'de', 'del', 'en', 'por', 'para', 'con', 'sin', 'sobre', 'entre', 'durante', 'tras', 'después', 'antes', 'mientras', 'aunque', 'pero', 'sin embargo', 'además', 'también', 'muy', 'más', 'menos', 'mucho', 'poco', 'todo', 'nada', 'algo', 'alguien', 'nadie', 'cualquier', 'algún', 'ningún', 'este', 'ese', 'aquel', 'esto', 'eso', 'aquello'];
+        if (!text) return 'es';
+        const spanishWords = ['el', 'la', 'los', 'las', 'de', 'del', 'en', 'por', 'para', 'con', 'sin', 'sobre', 'entre', 'durante', 'tras', 'después', 'antes', 'mientras', 'aunque', 'pero', 'además', 'también', 'muy', 'más', 'menos', 'mucho', 'poco', 'todo', 'nada', 'algo', 'alguien', 'nadie', 'cualquier', 'algún', 'ningún', 'este', 'ese', 'aquel', 'esto', 'eso', 'aquello'];
         const englishWords = ['the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'with', 'without', 'about', 'between', 'during', 'after', 'before', 'while', 'although', 'however', 'moreover', 'also', 'very', 'more', 'less', 'much', 'little', 'all', 'nothing', 'something', 'someone', 'no one', 'any', 'some', 'none', 'this', 'that', 'these', 'those'];
         const lower = text.toLowerCase();
         let esCount = 0, enCount = 0;
@@ -2382,24 +2650,19 @@
         englishWords.forEach(w => { if (lower.includes(' ' + w + ' ') || lower.startsWith(w + ' ') || lower.endsWith(' ' + w)) enCount++; });
         if (esCount > enCount) return 'es';
         if (enCount > esCount) return 'en';
-        return 'en'; // default
+        return 'en';
     }
 
     function translateText(text) {
         if (!text) return '';
         const lang = detectLanguage(text);
-        if (lang === 'es') return text; // Ya está en español
-
+        if (lang === 'es') return text;
         let translated = text;
-        // Ordenar por longitud descendente para evitar traducciones parciales
         const entries = Object.entries(TRANSLATION_DICT).sort((a, b) => b[0].length - a[0].length);
-
         for (const [en, es] of entries) {
             const regex = new RegExp('\\b' + en.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\b', 'gi');
             translated = translated.replace(regex, es);
         }
-
-        // Traducir frases comunes
         translated = translated.replace(/to\s+the\s+moon/gi, 'hasta la luna');
         translated = translated.replace(/buy\s+the\s+dip/gi, 'comprar en la caída');
         translated = translated.replace(/sell\s+the\s+news/gi, 'vender la noticia');
@@ -2410,7 +2673,6 @@
         translated = translated.replace(/bull\s+market/gi, 'mercado alcista');
         translated = translated.replace(/smart\s+money/gi, 'dinero inteligente');
         translated = translated.replace(/retail\s+investor/gi, 'inversor minorista');
-
         return translated;
     }
 
@@ -2420,7 +2682,6 @@
         let allArticles = [];
         const now = new Date();
         const fromDate = new Date(now.getTime() - 48 * 3600000).toISOString().split('T')[0];
-
         for (const endpoint of NEWSAPI_ENDPOINTS) {
             try {
                 const url = `https://newsapi.org/v2/everything?q=${encodeURIComponent(endpoint.q)}&from=${fromDate}&sortBy=publishedAt&language=${endpoint.lang}&pageSize=12&apiKey=${key}`;
@@ -2505,7 +2766,6 @@
         document.getElementById('intel-status').textContent = 'Cargando noticias globales...';
         let allNews = [];
         let sourceLabel = '';
-        let realNewsCount = 0;
 
         // 1. NewsAPI (ES + EN traducido)
         const key = getNewsApiKey();
@@ -2514,7 +2774,6 @@
                 const apiNews = await fetchNewsAPI();
                 if (apiNews.length > 0) {
                     allNews = apiNews;
-                    realNewsCount = apiNews.length;
                     const translatedCount = apiNews.filter(n => n.translated).length;
                     sourceLabel = `NewsAPI Global — ${apiNews.length} noticias${translatedCount > 0 ? ` (${translatedCount} traducidas)` : ''}`;
                     document.getElementById('newsapi-status').textContent = '✅ NewsAPI Global conectado';
@@ -2556,7 +2815,6 @@
             document.getElementById('intel-status').textContent = sourceLabel;
         }
 
-        // Deduplicar por título original
         const seen = new Set();
         allNews = allNews.filter(n => {
             const key = (n.originalTitle || n.title).toLowerCase().trim();
@@ -2572,7 +2830,6 @@
         document.getElementById('news-last-update').textContent = 'Actualizado: ' + new Date().toLocaleTimeString('es-ES');
         document.getElementById('news-source-label').textContent = sourceLabel;
 
-        // Procesar noticias y alertas
         newsCache = allNews.map(n => {
             const analysis = analyzeNewsImpact(n.title, n.description);
             const newsItem = { ...n, ...analysis, id: n.link || n.title };
@@ -2584,9 +2841,34 @@
             return newsItem;
         });
 
+        state.newsCacheGlobal = newsCache;
         renderNews();
         updateSentiment();
         renderCorrelationMatrix();
+    }
+
+    async function fetchNationalNews() {
+        let allNews = [];
+        for (const feed of RSS_FEEDS_NATIONAL) {
+            const items = await fetchRSS(feed);
+            allNews = allNews.concat(items);
+        }
+        if (allNews.length === 0) {
+            allNews = generateDemoNewsNationalES();
+        }
+        const seen = new Set();
+        allNews = allNews.filter(n => {
+            const key = (n.originalTitle || n.title).toLowerCase().trim();
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+        });
+        allNews.sort((a, b) => b.pubDate - a.pubDate);
+        allNews = allNews.slice(0, 30);
+        state.newsCacheNational = allNews.map(n => {
+            const analysis = analyzeNewsImpact(n.title, n.description);
+            return { ...n, ...analysis, id: n.link || n.title };
+        });
     }
 
     function generateDemoNewsES() {
@@ -2604,9 +2886,40 @@
         ];
     }
 
+    function generateDemoNewsNationalES() {
+        const now = Date.now();
+        return [
+            { title: 'El Ibex 35 cierra en verde impulsado por el sector bancario español', source: 'El País', type: 'stocks', pubDate: now - 1800000, description: 'Los bancos españoles lideran las ganancias en la Bolsa de Madrid tras los resultados trimestrales.', link: '#', isReal: false, translated: false, lang: 'es' },
+            { title: 'El Banco de España advierte sobre el riesgo de burbuja inmobiliaria', source: 'El Mundo', type: 'macro', pubDate: now - 3600000, description: 'El organismo supervisor alerta sobre los precios de la vivienda en las principales ciudades españolas.', link: '#', isReal: false, translated: false, lang: 'es' },
+            { title: 'Telefónica anuncia inversión récord en fibra óptica: 5.000 millones', source: 'La Vanguardia', type: 'stocks', pubDate: now - 5400000, description: 'La operadora española destinará una inversión histórica a la expansión de la red de fibra.', link: '#', isReal: false, translated: false, lang: 'es' },
+            { title: 'El Gobierno aprueba nuevas medidas fiscales para startups tecnológicas', source: 'El Confidencial', type: 'macro', pubDate: now - 7200000, description: 'Las nuevas medidas buscan atraer inversión extranjera al sector tecnológico español.', link: '#', isReal: false, translated: false, lang: 'es' },
+            { title: 'Santander supera expectativas con beneficios de 3.200 millones', source: 'Cinco Días', type: 'stocks', pubDate: now - 9000000, description: 'El banco español presenta resultados trimestrales por encima de las previsiones del mercado.', link: '#', isReal: false, translated: false, lang: 'es' },
+            { title: 'El turismo español bate récord de ingresos en el primer semestre', source: 'ABC', type: 'macro', pubDate: now - 10800000, description: 'El sector turístico español alcanza cifras históricas de facturación.', link: '#', isReal: false, translated: false, lang: 'es' },
+            { title: 'Inditex (Zara) presenta resultados mixtos: ventas online crecen un 15%', source: 'Expansión', type: 'stocks', pubDate: now - 12600000, description: 'El gigante textil español muestra fortaleza en el canal digital.', link: '#', isReal: false, translated: false, lang: 'es' },
+            { title: 'La deuda pública española supera el 110% del PIB', source: 'El Economista', type: 'macro', pubDate: now - 14400000, description: 'El Ministerio de Hacienda publica las últimas cifras de deuda soberana.', link: '#', isReal: false, translated: false, lang: 'es' },
+            { title: 'Repsol invierte en energías renovables: nuevo parque solar en Andalucía', source: 'El Mundo', type: 'stocks', pubDate: now - 16200000, description: 'La petrolera española acelera su transición energética con nuevos proyectos fotovoltaicos.', link: '#', isReal: false, translated: false, lang: 'es' },
+        ];
+    }
+
+    function switchNewsTab(tab) {
+        state.currentNewsTab = tab;
+        document.querySelectorAll('[data-news-tab]').forEach(b => b.classList.remove('active'));
+        document.querySelector(`[data-news-tab="${tab}"]`).classList.add('active');
+        const titleMap = { global: '🧠 Inteligencia de Mercado Global', national: '🇪🇸 Noticias Nacionales España', demo: '📰 Noticias Demo' };
+        const sectionTitleMap = { global: '📰 Noticias Globales en Vivo', national: '📰 Noticias Nacionales España', demo: '📰 Noticias de Demostración' };
+        document.getElementById('intel-section-title').textContent = titleMap[tab];
+        document.getElementById('news-section-title').textContent = sectionTitleMap[tab];
+        renderNews();
+    }
+
     function renderNews() {
         const container = document.getElementById('news-container');
-        const filtered = currentNewsFilter === 'all' ? newsCache : newsCache.filter(n => n.type === currentNewsFilter || (currentNewsFilter === 'macro' && n.impactLevel === 'high'));
+        let cache;
+        if (state.currentNewsTab === 'national') cache = state.newsCacheNational;
+        else if (state.currentNewsTab === 'demo') cache = generateDemoNewsES();
+        else cache = state.newsCacheGlobal;
+
+        const filtered = currentNewsFilter === 'all' ? cache : cache.filter(n => n.type === currentNewsFilter || (currentNewsFilter === 'macro' && n.impactLevel === 'high'));
         if (filtered.length === 0) { container.innerHTML = '<div class="text-center py-8 text-xs text-slate-500 col-span-2">Sin noticias en esta categoría</div>'; return; }
         container.innerHTML = filtered.map(n => {
             const impactClass = n.impactLevel === 'high' ? 'impact-high' : n.impactLevel === 'medium' ? 'impact-medium' : 'impact-low';
@@ -2650,7 +2963,7 @@
         return 'hace ' + Math.floor(hours / 24) + ' d';
     }
 
-    // ==================== CORRELATION MATRIX ====================
+    // ==================== CORRELATION MATRIX v2 ====================
     function renderCorrelationMatrix() {
         const assets = ['BTC', 'ETH', 'SOL', 'SPY', 'AAPL']; const matrix = document.getElementById('correlation-matrix');
         const correlations = {}; assets.forEach(a => correlations[a] = {});
@@ -2671,19 +2984,48 @@
                 }
             }
         }
-        let html = '<div class="corr-label"></div>'; assets.forEach(a => html += `<div class="corr-label">${a}</div>`);
+
+        // Build matrix grid
+        let html = '';
+        // Header row
+        html += '<div class="corr-v2-row-label"></div>';
+        assets.forEach(a => html += `<div class="corr-v2-label">${a}</div>`);
+        // Data rows
         assets.forEach(row => {
-            html += `<div class="corr-label flex items-center justify-end pr-1">${row}</div>`;
+            html += `<div class="corr-v2-row-label">${row}</div>`;
             assets.forEach(col => {
-                const val = correlations[row][col]; const isDiag = row === col; let bg, color;
-                if (isDiag) { bg = 'rgba(148, 163, 184, 0.2)'; color = '#94a3b8'; }
-                else if (val > 0.3) { bg = `rgba(16, 185, 129, ${val * 0.3})`; color = '#4ade80'; }
-                else if (val < -0.3) { bg = `rgba(239, 68, 68, ${Math.abs(val) * 0.3})`; color = '#fb7185'; }
-                else { bg = 'rgba(100, 116, 139, 0.1)'; color = '#64748b'; }
-                html += `<div class="corr-cell" style="background:${bg};color:${color}" title="${row} vs ${col}: ${(val*100).toFixed(0)}%">${isDiag ? '—' : (val*100).toFixed(0)}</div>`;
+                const val = correlations[row][col]; const isDiag = row === col;
+                let bg, color;
+                if (isDiag) { bg = 'rgba(148, 163, 184, 0.15)'; color = '#94a3b8'; }
+                else if (val > 0.6) { bg = 'linear-gradient(135deg, #059669, #10b981)'; color = '#ffffff'; }
+                else if (val > 0.3) { bg = 'linear-gradient(135deg, #34d399, #059669)'; color = '#ffffff'; }
+                else if (val < -0.6) { bg = 'linear-gradient(135deg, #dc2626, #ef4444)'; color = '#ffffff'; }
+                else if (val < -0.3) { bg = 'linear-gradient(135deg, #fb7185, #ef4444)'; color = '#ffffff'; }
+                else { bg = 'rgba(51, 65, 85, 0.4)'; color = '#94a3b8'; }
+                html += `<div class="corr-v2-cell" style="background:${bg};color:${color}" title="${row} vs ${col}: ${(val*100).toFixed(0)}%">
+                    <span class="tooltip">${row} ↔ ${col}: ${(val*100).toFixed(0)}%</span>
+                    ${isDiag ? '—' : (val*100).toFixed(0)}
+                </div>`;
             });
         });
         matrix.innerHTML = html;
+
+        // Bar chart
+        const barContainer = document.getElementById('correlation-bar-chart');
+        const avgCorrs = assets.map(asset => {
+            let sum = 0, count = 0;
+            assets.forEach(other => { if (asset !== other) { sum += Math.abs(correlations[asset][other]); count++; } });
+            return { asset, avg: count > 0 ? sum / count : 0 };
+        });
+        const maxAvg = Math.max(...avgCorrs.map(a => a.avg)) || 1;
+        barContainer.innerHTML = avgCorrs.map(item => {
+            const height = (item.avg / maxAvg) * 100;
+            const color = item.avg > 0.5 ? 'linear-gradient(180deg, #10b981, #059669)' : item.avg > 0.25 ? 'linear-gradient(180deg, #fbbf24, #d97706)' : 'linear-gradient(180deg, #64748b, #475569)';
+            return `<div class="corr-v2-bar" style="height:${height}%;background:${color}">
+                <div class="corr-v2-bar-value">${(item.avg*100).toFixed(0)}%</div>
+                <div class="corr-v2-bar-label">${item.asset}</div>
+            </div>`;
+        }).join('');
     }
     function getAssetSentiment(asset) {
         const el = document.getElementById('sent-' + asset.toLowerCase());
@@ -2765,16 +3107,18 @@
 
     async function refreshIntel() {
         await fetchNews();
+        await fetchNationalNews();
         renderEconomicCalendar();
         renderMacroEvents();
     }
 
     // ==================== INICIO ====================
-    initTheme(); initChart(); loadState(); updatePrices(); refreshData(); refreshIntel();
+    initTheme(); initChart(); loadState(); updatePrices(); refreshData(); refreshIntel(); refreshMultiSignals();
     const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
     setInterval(updatePrices, isMobileDevice ? 15000 : (state.assetType === 'crypto' ? 10000 : 30000));
     setInterval(() => { if (!state.isLoading) refreshData(); }, isMobileDevice ? 600000 : (state.interval === '15m' ? 180000 : 300000));
-    setInterval(() => { refreshIntel(); }, 120000); // Noticias cada 2 minutos
+    setInterval(() => { refreshIntel(); }, 120000);
+    setInterval(() => { refreshMultiSignals(); }, 300000); // Multi-asset signals cada 5 min
     window.addEventListener('orientationchange', () => { setTimeout(() => { if (state.chart) state.chart.applyOptions({ width: document.getElementById('chart-container').clientWidth }); }, 300); });
     </script>
 </body>
