@@ -1671,6 +1671,7 @@
 
     // ==================== EMAILJS INTEGRATION ====================
     let emailjsReady = false;
+    let emailjsPublicKey = '';
 
     function initEmailJS() {
         const publicKey = document.getElementById('emailjs-publickey').value.trim();
@@ -1680,12 +1681,15 @@
             return;
         }
         try {
-            emailjs.init(publicKey);
+            // ✅ FORMA CORRECTA EmailJS v4: objeto con publicKey
+            emailjs.init({ publicKey: publicKey });
             emailjsReady = true;
+            emailjsPublicKey = publicKey;
             document.getElementById('emailjs-status').textContent = '✅ EmailJS conectado correctamente';
             document.getElementById('emailjs-status').className = 'text-[10px] mt-2 text-emerald-400';
             saveState();
         } catch (e) {
+            console.error('EmailJS init error:', e);
             document.getElementById('emailjs-status').textContent = '❌ Error al conectar: ' + e.message;
             document.getElementById('emailjs-status').className = 'text-[10px] mt-2 text-red-400';
         }
@@ -1696,7 +1700,10 @@
         const service = document.getElementById('emailjs-service').value.trim();
         const template = document.getElementById('emailjs-template').value.trim();
 
-        if (!email || !service || !template || !emailjsReady) return;
+        if (!email || !service || !template || !emailjsReady) {
+            console.warn('[EMAIL] Faltan datos:', { email, service, template, ready: emailjsReady });
+            return;
+        }
 
         const params = {
             to_email: email,
@@ -1712,14 +1719,18 @@ ${alert.message}
 CryptoSignal Pro v4.8`
         };
 
-        emailjs.send(service, template, params)
-            .then(() => {
-                console.log('[EMAIL REAL ENVIADO] a', email);
+        console.log('[EMAIL] Enviando con params:', params);
+
+        // ✅ EmailJS v4: pasamos la publicKey explícitamente como 4to argumento
+        emailjs.send(service, template, params, { publicKey: emailjsPublicKey })
+            .then((result) => {
+                console.log('[EMAIL REAL ENVIADO] a', email, 'Status:', result.status);
                 addAlert('info', 'Email enviado', 'Señal enviada a ' + email, null);
             })
-            .catch(err => {
+            .catch((err) => {
                 console.error('[EMAIL ERROR]', err);
-                document.getElementById('emailjs-status').textContent = '⚠️ Error enviando: ' + (err.text || err.message);
+                const msg = err.text || err.message || 'Error desconocido';
+                document.getElementById('emailjs-status').textContent = '⚠️ Error enviando: ' + msg;
                 document.getElementById('emailjs-status').className = 'text-[10px] mt-2 text-amber-400';
             });
     }
