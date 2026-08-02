@@ -839,8 +839,7 @@
         </div>
 
         <div id="stock-warning-banner" class="stock-warning hidden">
-            📊 <strong>Acciones (SPY/AAPL):</strong> Usando datos de mercado. 
-            Para datos reales en tiempo real, configura una API key en la pestaña <strong>Alertas</strong>.
+            📊 <strong>Acciones (SPY/AAPL):</strong> <span id="stock-data-source">Cargando fuente de datos...</span>
             <button onclick="switchToCrypto()" class="underline hover:text-white ml-1">Cambiar a BTC →</button>
         </div>
 
@@ -1859,6 +1858,10 @@ CryptoSignal Pro v4.8`
     let finnhubApiKey = '';
     let alphaVantageKey = '';
 
+    // Detectar si estamos en un servidor web (GitHub Pages, etc.) o archivo local
+    const IS_LOCAL_FILE = window.location.protocol === 'file:';
+    const IS_LOCALHOST = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
     function getFinnhubKey() { return document.getElementById('finnhub-key')?.value?.trim() || finnhubApiKey; }
     function getAlphaVantageKey() { return document.getElementById('alphavantage-key')?.value?.trim() || alphaVantageKey; }
     function saveFinnhubKey() {
@@ -2209,7 +2212,31 @@ CryptoSignal Pro v4.8`
         }
     }
     async function fetchYahooChart(symbol, interval, range) {
-        // 1. FINNHUB (si hay key)
+        // 1. YAHOO FINANCE (funciona gratis desde GitHub Pages / hosting web)
+        if (!IS_LOCAL_FILE) {
+            try {
+                const yfInterval = interval === '15m' ? '15m' : interval === '1h' ? '1h' : interval === '4h' ? '4h' : '1d';
+                const yfRange = range || (interval === '15m' ? '1mo' : interval === '1h' ? '3mo' : interval === '4h' ? '6mo' : '1y');
+                const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${yfInterval}&range=${yfRange}&includeAdjustedClose=true`;
+                const json = await fetchWithRetry(url, {}, 2, 15000);
+                if (json.chart && json.chart.result && json.chart.result.length > 0) {
+                    const result = json.chart.result[0];
+                    const timestamps = result.timestamp;
+                    const q = result.indicators.quote[0];
+                    const candles = [];
+                    for (let i = 0; i < timestamps.length; i++) {
+                        if (q.open[i] === null || q.open[i] === undefined) continue;
+                        candles.push({ time: timestamps[i], open: q.open[i], high: q.high[i], low: q.low[i], close: q.close[i], volume: q.volume[i] || 0 });
+                    }
+                    if (candles.length >= 50) {
+                        state.usingMock = false;
+                        console.log('[YAHOO] Datos reales para', symbol, '-', candles.length, 'velas');
+                        return candles;
+                    }
+                }
+            } catch (e) { console.warn('[YAHOO] No disponible:', e.message); }
+        }
+        // 2. FINNHUB (si hay API key configurada)
         const finnhubKey = getFinnhubKey();
         if (finnhubKey) {
             try {
@@ -2219,22 +2246,24 @@ CryptoSignal Pro v4.8`
                 const candles = await fetchFinnhubCandles(symbol, resolution, from, now);
                 if (candles.length >= 50) {
                     state.usingMock = false;
+                    console.log('[FINNHUB] Datos reales para', symbol);
                     return candles;
                 }
             } catch (e) { console.warn('Finnhub:', e.message); }
         }
-        // 2. ALPHA VANTAGE (si hay key)
+        // 3. ALPHA VANTAGE (si hay API key configurada)
         const avKey = getAlphaVantageKey();
         if (avKey) {
             try {
                 const candles = await fetchAlphaVantageCandles(symbol, interval);
                 if (candles.length >= 50) {
                     state.usingMock = false;
+                    console.log('[ALPHA VANTAGE] Datos reales para', symbol);
                     return candles;
                 }
             } catch (e) { console.warn('Alpha Vantage:', e.message); }
         }
-        // 3. SIN API KEY: SIMULACIÓN DIRECTA (sin intentar Yahoo)
+        // 4. SIMULACIÓN (último recurso)
         console.log('[SIMULACIÓN] Datos para', symbol);
         state.usingMock = true;
         return generateMockCandles(symbol, interval, 400);
@@ -2744,7 +2773,30 @@ CryptoSignal Pro v4.8`
         container.className = 'rounded-lg p-3 text-center border border-amber-500/20 bg-amber-500/5 min-h-[60px] flex flex-col items-center justify-center';
         container.innerHTML = `<div class="text-xs text-amber-400 font-medium">⚠️ ${message}</div>${canRetry ? '<button onclick="refreshData()" class="retry-btn mt-2">Reintentar ahora</button>' : '<div class="text-[10px] text-slate-400 mt-1">Reintentando automáticamente...</div>'}`;
     }
-    function showStockWarning() { const banner = document.getElementById('stock-warning-banner'); if (state.assetType === 'stock') banner.classList.remove('hidden'); else banner.classList.add('hidden'); }
+    function showStockWarning() { 
+        const banner = document.getElementById('stock-warning-banner'); 
+        const sourceLabel = document.getElementById('stock-data-source');
+        if (state.assetType === 'stock') {
+            banner.classList.remove('hidden');
+            if (sourceLabel) {
+                if (!IS_LOCAL_FILE && !state.usingMock) {
+                    sourceLabel.textContent = 'Datos reales vía Yahoo Finance.';
+                    sourceLabel.style.color = '#4ade80';
+                } else if (getFinnhubKey() && !state.usingMock) {
+                    sourceLabel.textContent = 'Datos reales vía Finnhub.';
+                    sourceLabel.style.color = '#4ade80';
+                } else if (getAlphaVantageKey() && !state.usingMock) {
+                    sourceLabel.textContent = 'Datos reales vía Alpha Vantage.';
+                    sourceLabel.style.color = '#4ade80';
+                } else {
+                    sourceLabel.textContent = 'Usando simulación realista (precios aproximados). Para datos reales, abre desde un servidor web o configura API key.';
+                    sourceLabel.style.color = '#fbbf24';
+                }
+            }
+        } else {
+            banner.classList.add('hidden');
+        }
+    }
     function switchToCrypto() { document.getElementById('symbol-select').value = 'BTCUSDT'; refreshData(); }
     function addSignalToHistory(signal) {
         const lastSignal = state.signals[0]; if (lastSignal && lastSignal.type === signal.type && (Date.now() - lastSignal.timestamp) < CONFIG.cooldownMinutes * 60000) return;
