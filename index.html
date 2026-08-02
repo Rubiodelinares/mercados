@@ -2129,81 +2129,90 @@ CryptoSignal Pro v4.8`
     const MOCK_VOLATILITY = { 'SPY': 0.003, 'AAPL': 0.005, 'BTC': 0.008, 'ETH': 0.01, 'SOL': 0.012 };
 
     function generateMockCandles(symbol, interval, count = 400) {
-        const cleanSymbol = symbol.replace('USDT', '');
-        let basePrice;
-        try { basePrice = getRealisticBasePrice(symbol); } 
-        catch (err) { basePrice = MOCK_BASE_PRICES[cleanSymbol] || 100; }
-        const volatility = MOCK_VOLATILITY[cleanSymbol] || 0.004;
-        const trend = MOCK_TREND[cleanSymbol] || 0;
-        const now = Math.floor(Date.now() / 1000);
-        const intervalSeconds = interval === '15m' ? 900 : interval === '1h' ? 3600 : interval === '4h' ? 14400 : 86400;
-        const candles = []; 
-        let price = basePrice;
-        const isStock = !symbol.includes('USDT');
-        // Seed basado en tiempo real para variación continua
-        const timeSeed = Math.floor(now / 30); // Cambia cada 30 segundos
-        const seedBase = cleanSymbol.split('').reduce((a, c) => a + c.charCodeAt(0), 0) + interval.length * 1000 + timeSeed;
+        try {
+            const cleanSymbol = String(symbol || 'BTC').replace('USDT', '');
+            const basePrice = MOCK_BASE_PRICES[cleanSymbol] || 100;
+            const volatility = MOCK_VOLATILITY[cleanSymbol] || 0.004;
+            const trend = MOCK_TREND[cleanSymbol] || 0;
+            const now = Math.floor(Date.now() / 1000);
+            const intervalSeconds = interval === '15m' ? 900 : interval === '1h' ? 3600 : interval === '4h' ? 14400 : 86400;
+            const candles = [];
+            let price = basePrice;
+            const isStock = !String(symbol).includes('USDT');
+            const timeSeed = Math.floor(now / 60);
+            const seedBase = (cleanSymbol.split('').reduce((a, c) => a + (c.charCodeAt(0) || 0), 0) || 100) + (String(interval).length * 1000) + timeSeed;
 
-        for (let i = count; i >= 0; i--) {
-            const time = now - (i * intervalSeconds);
-            const rand = seededRandom(seedBase + i + Math.floor(time / 86400));
-
-            // Para stocks, simular sesión de trading con apertura y cierre
-            let sessionMultiplier = 1;
-            if (isStock) {
-                const date = new Date(time * 1000);
-                const hourET = (date.getUTCHours() - 4 + 24) % 24; // Aprox ET
-                const dayOfWeek = date.getUTCDay();
-                // Menos volatilidad fuera de horario de trading
-                if (dayOfWeek === 0 || dayOfWeek === 6 || hourET < 9 || hourET >= 16) {
-                    sessionMultiplier = 0.3; // 30% volatilidad fuera de horario
-                } else if (hourET === 9 || hourET === 15) {
-                    sessionMultiplier = 1.5; // Más volatilidad en apertura/cierre
+            for (let i = count; i >= 0; i--) {
+                const time = now - (i * intervalSeconds);
+                const rand = seededRandom(seedBase + i + Math.floor(time / 86400));
+                let sessionMultiplier = 1;
+                if (isStock) {
+                    const date = new Date(time * 1000);
+                    const hourET = (date.getUTCHours() - 4 + 24) % 24;
+                    const dayOfWeek = date.getUTCDay();
+                    if (dayOfWeek === 0 || dayOfWeek === 6 || hourET < 9 || hourET >= 16) {
+                        sessionMultiplier = 0.3;
+                    } else if (hourET === 9 || hourET === 15) {
+                        sessionMultiplier = 1.5;
+                    }
                 }
+                const trendComponent = trend * (count - i) / count;
+                const change = ((rand() - 0.5) * volatility * 2 + trendComponent) * sessionMultiplier;
+                const open = price;
+                const close = price * (1 + change);
+                const high = Math.max(open, close) * (1 + Math.abs(rand() * volatility * sessionMultiplier));
+                const low = Math.min(open, close) * (1 - Math.abs(rand() * volatility * sessionMultiplier));
+                const volume = Math.floor((1000000 + rand() * 5000000) * (intervalSeconds / 3600) * (isStock ? 0.5 : 1));
+                candles.push({ time, open, high, low, close, volume });
+                price = close;
             }
-
-            const trendComponent = trend * (count - i) / count;
-            const change = ((rand() - 0.5) * volatility * 2 + trendComponent) * sessionMultiplier;
-            const open = price; 
-            const close = price * (1 + change);
-            const high = Math.max(open, close) * (1 + Math.abs(rand() * volatility * sessionMultiplier));
-            const low = Math.min(open, close) * (1 - Math.abs(rand() * volatility * sessionMultiplier));
-            const volume = Math.floor((1000000 + rand() * 5000000) * (intervalSeconds / 3600) * (isStock ? 0.5 : 1));
-            candles.push({ time, open, high, low, close, volume }); 
-            price = close;
+            return candles;
+        } catch (err) {
+            console.error('Error en generateMockCandles:', err);
+            // Fallback absoluto: velas mínimas válidas
+            const now = Math.floor(Date.now() / 1000);
+            const intervalSeconds = 3600;
+            const candles = [];
+            let price = 100;
+            for (let i = count; i >= 0; i--) {
+                const time = now - (i * intervalSeconds);
+                const change = (Math.random() - 0.5) * 0.01;
+                const open = price;
+                const close = price * (1 + change);
+                candles.push({ time, open, high: Math.max(open, close) * 1.002, low: Math.min(open, close) * 0.998, close, volume: 1000000 });
+                price = close;
+            }
+            return candles;
         }
-        return candles;
     }
     function generateMockTicker(symbol) {
-        const cleanSymbol = symbol.replace('USDT', '');
-        let basePrice;
-        try { basePrice = getRealisticBasePrice(symbol); } 
-        catch (err) { basePrice = MOCK_BASE_PRICES[cleanSymbol] || 100; }
-        const volatility = MOCK_VOLATILITY[cleanSymbol] || 0.004;
-        const isStock = !symbol.includes('USDT');
-        // Seed basado en tiempo real para variación continua
-        const now = Date.now();
-        const seed = cleanSymbol.split('').reduce((a, c) => a + c.charCodeAt(0), 0) + Math.floor(now / 15000); // Cambia cada 15 segundos
-        const rand = seededRandom(seed);
-
-        // Para stocks, simular movimiento más realista durante el día
-        const date = new Date();
-        const hourET = (date.getUTCHours() - 4 + 24) % 24;
-        const dayProgress = Math.max(0, Math.min(1, (hourET - 9.5) / 6.5)); // 0 al inicio, 1 al cierre
-        const intradayTrend = isStock ? Math.sin(dayProgress * Math.PI) * 0.002 : 0; // Curva de campana suave
-
-        const change = (rand() - 0.5) * volatility * 100 + (intradayTrend * 100);
-        const price = basePrice * (1 + change / 100);
-        const high = price * (1 + Math.abs(rand() * volatility * 1.2)); 
-        const low = price * (1 - Math.abs(rand() * volatility * 1.2));
-
-        return { 
-            lastPrice: price.toFixed(2), 
-            priceChangePercent: change.toFixed(2), 
-            highPrice: high.toFixed(2), 
-            lowPrice: low.toFixed(2), 
-            volume: Math.floor((isStock ? 20000000 : 5000000) + rand() * 10000000).toString() 
-        };
+        try {
+            const cleanSymbol = String(symbol || 'BTC').replace('USDT', '');
+            const basePrice = MOCK_BASE_PRICES[cleanSymbol] || 100;
+            const volatility = MOCK_VOLATILITY[cleanSymbol] || 0.004;
+            const isStock = !String(symbol).includes('USDT');
+            const now = Date.now();
+            const seed = (cleanSymbol.split('').reduce((a, c) => a + (c.charCodeAt(0) || 0), 0) || 100) + Math.floor(now / 15000);
+            const rand = seededRandom(seed);
+            const date = new Date();
+            const hourET = (date.getUTCHours() - 4 + 24) % 24;
+            const dayProgress = Math.max(0, Math.min(1, (hourET - 9.5) / 6.5));
+            const intradayTrend = isStock ? Math.sin(dayProgress * Math.PI) * 0.002 : 0;
+            const change = (rand() - 0.5) * volatility * 100 + (intradayTrend * 100);
+            const price = basePrice * (1 + change / 100);
+            const high = price * (1 + Math.abs(rand() * volatility * 1.2));
+            const low = price * (1 - Math.abs(rand() * volatility * 1.2));
+            return {
+                lastPrice: price.toFixed(2),
+                priceChangePercent: change.toFixed(2),
+                highPrice: high.toFixed(2),
+                lowPrice: low.toFixed(2),
+                volume: Math.floor((isStock ? 20000000 : 5000000) + rand() * 10000000).toString()
+            };
+        } catch (err) {
+            console.error('Error en generateMockTicker:', err);
+            return { lastPrice: '100.00', priceChangePercent: '0.00', highPrice: '101.00', lowPrice: '99.00', volume: '1000000' };
+        }
     }
 
     async function fetchBinanceKlines(symbol, interval, limit = 400) {
@@ -2220,7 +2229,7 @@ CryptoSignal Pro v4.8`
         }
     }
     async function fetchYahooChart(symbol, interval, range) {
-        // 1. INTENTAR FINNHUB PRIMERO (si hay API key)
+        // 1. FINNHUB (si hay key)
         const finnhubKey = getFinnhubKey();
         if (finnhubKey) {
             try {
@@ -2230,30 +2239,25 @@ CryptoSignal Pro v4.8`
                 const candles = await fetchFinnhubCandles(symbol, resolution, from, now);
                 if (candles.length >= 50) {
                     state.usingMock = false;
-                    console.log('[FINNHUB] Datos reales obtenidos para', symbol, '-', candles.length, 'velas');
                     return candles;
                 }
-            } catch (e) { console.warn('Finnhub candles falló:', e.message); }
+            } catch (e) { console.warn('Finnhub:', e.message); }
         }
-        // 2. INTENTAR YAHOO DIRECTO
-        const yfInterval = interval === '15m' ? '15m' : interval === '1h' ? '1h' : interval === '4h' ? '4h' : '1d';
-        const yfRange = range || (interval === '15m' ? '1mo' : interval === '1h' ? '3mo' : interval === '4h' ? '6mo' : '1y');
-        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${yfInterval}&range=${yfRange}&includeAdjustedClose=true`;
-        try {
-            const json = await fetchWithRetry(url, {}, 2, 10000);
-            if (!json.chart || !json.chart.result || json.chart.result.length === 0) throw new Error('Yahoo Finance: sin datos');
-            const result = json.chart.result[0]; const timestamps = result.timestamp; const q = result.indicators.quote[0];
-            const candles = [];
-            for (let i = 0; i < timestamps.length; i++) {
-                if (q.open[i] === null || q.open[i] === undefined) continue;
-                candles.push({ time: timestamps[i], open: q.open[i], high: q.high[i], low: q.low[i], close: q.close[i], volume: q.volume[i] || 0 });
-            }
-            if (candles.length < 50) throw new Error('Yahoo Finance: datos insuficientes');
-            state.usingMock = false; return candles;
-        } catch (e) {
-            console.warn('Yahoo falló, usando datos simulados para', symbol);
-            state.usingMock = true; return generateMockCandles(symbol, interval, 400);
+        // 2. ALPHA VANTAGE (si hay key)
+        const avKey = getAlphaVantageKey();
+        if (avKey) {
+            try {
+                const candles = await fetchAlphaVantageCandles(symbol, interval);
+                if (candles.length >= 50) {
+                    state.usingMock = false;
+                    return candles;
+                }
+            } catch (e) { console.warn('Alpha Vantage:', e.message); }
         }
+        // 3. SIN API KEY: SIMULACIÓN DIRECTA (sin intentar Yahoo)
+        console.log('[SIMULACIÓN] Datos para', symbol);
+        state.usingMock = true;
+        return generateMockCandles(symbol, interval, 400);
     }
     async function fetchBinanceTicker(symbol) {
         const url = `https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`;
@@ -2841,46 +2845,89 @@ CryptoSignal Pro v4.8`
     }
 
     async function refreshData() {
-        if (state.isLoading) return; state.isLoading = true; document.getElementById('chart-loading').style.display = 'flex'; showStockWarning();
+        if (state.isLoading) return;
+        state.isLoading = true;
+        document.getElementById('chart-loading').style.display = 'flex';
+        showStockWarning();
         try {
-            const select = document.getElementById('symbol-select'); state.symbol = select.value; state.assetType = select.options[select.selectedIndex].dataset.type; state.interval = document.getElementById('interval-select').value;
-            document.getElementById('asset-type').textContent = state.assetType === 'crypto' ? 'Cripto' : 'Acciones'; document.getElementById('market-status').textContent = state.assetType === 'crypto' ? '24/7' : 'NYSE 9:30-16:00 ET';
-            document.getElementById('chart-tf-label').textContent = state.interval.toUpperCase(); document.getElementById('mock-badge').classList.toggle('hidden', !state.usingMock);
+            const select = document.getElementById('symbol-select');
+            state.symbol = select.value;
+            state.assetType = select.options[select.selectedIndex].dataset.type;
+            state.interval = document.getElementById('interval-select').value;
+            document.getElementById('asset-type').textContent = state.assetType === 'crypto' ? 'Cripto' : 'Acciones';
+            document.getElementById('market-status').textContent = state.assetType === 'crypto' ? '24/7' : 'NYSE 9:30-16:00 ET';
+            document.getElementById('chart-tf-label').textContent = state.interval.toUpperCase();
+            document.getElementById('mock-badge').classList.toggle('hidden', !state.usingMock);
+
             let candles;
-            try { if (state.assetType === 'crypto') candles = await fetchBinanceKlines(state.symbol, state.interval, 400); else candles = await fetchYahooChart(state.symbol, state.interval); }
-            catch (e) {
+            try {
+                if (state.assetType === 'crypto') {
+                    candles = await fetchBinanceKlines(state.symbol, state.interval, 400);
+                } else {
+                    candles = await fetchYahooChart(state.symbol, state.interval);
+                }
+            } catch (e) {
                 console.error('Error fetch principal:', e);
-                if (state.assetType === 'stock') { 
-                state.stockErrorCount++; 
-                // No mostrar error al usuario, simplemente usar datos simulados realistas
-                console.log('Usando datos simulados realistas para', state.symbol);
-                state.usingMock = true;
-                // Continuar con datos simulados sin interrumpir
+                if (state.assetType === 'stock') {
+                    console.log('Generando simulación para', state.symbol);
+                    state.usingMock = true;
+                    candles = generateMockCandles(state.symbol, state.interval, 400);
+                } else {
+                    showSignalError('Error de conexión: ' + e.message, true);
+                    addErrorAlert(e.message);
+                    state.isLoading = false;
+                    document.getElementById('chart-loading').style.display = 'none';
+                    setTimeout(refreshData, 10000);
+                    return;
+                }
             }
-                else { showSignalError('Error de conexión: ' + e.message, true); addErrorAlert(e.message); state.isLoading = false; document.getElementById('chart-loading').style.display = 'none'; setTimeout(refreshData, 10000); return; }
-            }
+
             if (!candles || candles.length < 50) {
-            if (state.assetType === 'stock') {
-                console.log('Generando datos simulados de respaldo para', state.symbol);
-                candles = generateMockCandles(state.symbol, state.interval, 400);
-            } else {
-                throw new Error('Datos insuficientes del servidor');
+                if (state.assetType === 'stock') {
+                    console.log('Respaldo simulado para', state.symbol);
+                    state.usingMock = true;
+                    candles = generateMockCandles(state.symbol, state.interval, 400);
+                } else {
+                    throw new Error('Datos insuficientes del servidor');
+                }
             }
-        }
+
             state.candles = candles;
-            const ema20 = calculateEMA(candles, 20); const ema50 = calculateEMA(candles, 50); const ema200 = calculateEMA(candles, 200);
-            const rsi = calculateRSI(candles, 14); const macd = calculateMACD(candles); const atr = calculateATR(candles, 14);
-            const volumeMA = calculateVolumeMA(candles, 20); const bollinger = calculateBollinger(candles, 20, 2); const adx = calculateADX(candles, 14);
+            const ema20 = calculateEMA(candles, 20);
+            const ema50 = calculateEMA(candles, 50);
+            const ema200 = calculateEMA(candles, 200);
+            const rsi = calculateRSI(candles, 14);
+            const macd = calculateMACD(candles);
+            const atr = calculateATR(candles, 14);
+            const volumeMA = calculateVolumeMA(candles, 20);
+            const bollinger = calculateBollinger(candles, 20, 2);
+            const adx = calculateADX(candles, 14);
             state.indicators = { ema20, ema50, ema200, rsi, macd, atr, volumeMA, bollinger, adx };
-            updateChart(candles, state.indicators); updateIndicatorsUI(state.indicators, candles);
+            updateChart(candles, state.indicators);
+            updateIndicatorsUI(state.indicators, candles);
             try { await fetchMTFData(); } catch (e) { console.warn('MTF fetch error:', e); }
-            const signal = analyzeSignal(candles, state.indicators, state.symbol, state.interval); displayCurrentSignal(signal); if (signal) addSignalToHistory(signal);
-            document.getElementById('last-update').textContent = new Date().toLocaleTimeString('es-ES'); state.lastError = null; state.retryCount = 0; state.stockErrorCount = 0;
+            const signal = analyzeSignal(candles, state.indicators, state.symbol, state.interval);
+            displayCurrentSignal(signal);
+            if (signal) addSignalToHistory(signal);
+            document.getElementById('last-update').textContent = new Date().toLocaleTimeString('es-ES');
+            state.lastError = null;
+            state.retryCount = 0;
+            state.stockErrorCount = 0;
             if (Notification.permission === 'default') Notification.requestPermission();
         } catch (e) {
-            console.error('Error general:', e); state.lastError = e.message; state.retryCount++; showSignalError(e.message || 'Error desconocido', true); state.isLoading = false; document.getElementById('chart-loading').style.display = 'none'; if (state.retryCount < 5) setTimeout(refreshData, 10000 * state.retryCount);
+            console.error('Error general:', e);
+            state.lastError = e.message;
+            state.retryCount++;
+            if (state.assetType !== 'stock') {
+                showSignalError(e.message || 'Error desconocido', true);
+            }
+            state.isLoading = false;
+            document.getElementById('chart-loading').style.display = 'none';
+            if (state.retryCount < 5) setTimeout(refreshData, 10000 * state.retryCount);
+            return;
         }
-        state.isLoading = false; document.getElementById('chart-loading').style.display = 'none';
+        state.isLoading = false;
+        document.getElementById('chart-loading').style.display = 'none';
     }
 
     function switchTab(tabName) {
@@ -3035,6 +3082,8 @@ CryptoSignal Pro v4.8`
                 if (data.config) { CONFIG = { ...CONFIG, ...data.config }; if (CONFIG.theme) { document.documentElement.setAttribute('data-theme', CONFIG.theme); updateThemeIcon(); } }
                 state.autoMode = data.autoMode || false; state.pushEnabled = data.pushEnabled || false;
                 if (data.newsApiKey) document.getElementById('newsapi-key').value = data.newsApiKey;
+                if (data.finnhubKey) { document.getElementById('finnhub-key').value = data.finnhubKey; finnhubApiKey = data.finnhubKey; }
+                if (data.alphaVantageKey) { document.getElementById('alphavantage-key').value = data.alphaVantageKey; alphaVantageKey = data.alphaVantageKey; }
                 if (data.emailAlert) document.getElementById('email-alert').value = data.emailAlert;
                 if (data.emailjsService) document.getElementById('emailjs-service').value = data.emailjsService;
                 if (data.emailjsTemplate) document.getElementById('emailjs-template').value = data.emailjsTemplate;
