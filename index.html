@@ -1527,6 +1527,16 @@
         };
     }
 
+    function getRealisticBasePrice(symbol) {
+        const cleanSymbol = symbol.replace('USDT', '');
+        const base = MOCK_BASE_PRICES[cleanSymbol] || 100;
+        const now = Date.now();
+        const daySeed = Math.floor(now / 86400000);
+        const rand = seededRandom(daySeed + (cleanSymbol.charCodeAt(0) || 65) * 100);
+        const trend = (rand() - 0.5) * 0.02;
+        return base * (1 + trend);
+    }
+
     function initTheme() {
         const saved = localStorage.getItem('theme') || 'dark';
         CONFIG.theme = saved;
@@ -2120,7 +2130,9 @@ CryptoSignal Pro v4.8`
 
     function generateMockCandles(symbol, interval, count = 400) {
         const cleanSymbol = symbol.replace('USDT', '');
-        const basePrice = getRealisticBasePrice(symbol);
+        let basePrice;
+        try { basePrice = getRealisticBasePrice(symbol); } 
+        catch (err) { basePrice = MOCK_BASE_PRICES[cleanSymbol] || 100; }
         const volatility = MOCK_VOLATILITY[cleanSymbol] || 0.004;
         const trend = MOCK_TREND[cleanSymbol] || 0;
         const now = Math.floor(Date.now() / 1000);
@@ -2164,7 +2176,9 @@ CryptoSignal Pro v4.8`
     }
     function generateMockTicker(symbol) {
         const cleanSymbol = symbol.replace('USDT', '');
-        const basePrice = getRealisticBasePrice(symbol);
+        let basePrice;
+        try { basePrice = getRealisticBasePrice(symbol); } 
+        catch (err) { basePrice = MOCK_BASE_PRICES[cleanSymbol] || 100; }
         const volatility = MOCK_VOLATILITY[cleanSymbol] || 0.004;
         const isStock = !symbol.includes('USDT');
         // Seed basado en tiempo real para variación continua
@@ -2845,7 +2859,14 @@ CryptoSignal Pro v4.8`
             }
                 else { showSignalError('Error de conexión: ' + e.message, true); addErrorAlert(e.message); state.isLoading = false; document.getElementById('chart-loading').style.display = 'none'; setTimeout(refreshData, 10000); return; }
             }
-            if (!candles || candles.length < 50) throw new Error('Datos insuficientes del servidor');
+            if (!candles || candles.length < 50) {
+            if (state.assetType === 'stock') {
+                console.log('Generando datos simulados de respaldo para', state.symbol);
+                candles = generateMockCandles(state.symbol, state.interval, 400);
+            } else {
+                throw new Error('Datos insuficientes del servidor');
+            }
+        }
             state.candles = candles;
             const ema20 = calculateEMA(candles, 20); const ema50 = calculateEMA(candles, 50); const ema200 = calculateEMA(candles, 200);
             const rsi = calculateRSI(candles, 14); const macd = calculateMACD(candles); const atr = calculateATR(candles, 14);
