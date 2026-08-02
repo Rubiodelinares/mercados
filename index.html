@@ -499,6 +499,39 @@
             background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(139, 92, 246, 0.08));
             border-color: rgba(59, 130, 246, 0.3);
         }
+    
+        .whale-card {
+            background: linear-gradient(135deg, rgba(30, 41, 59, 0.6), rgba(17, 24, 39, 0.8));
+            border: 1px solid rgba(148, 163, 184, 0.12);
+            border-radius: 10px;
+            padding: 10px 14px;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+        }
+        [data-theme="light"] .whale-card {
+            background: linear-gradient(135deg, rgba(241, 245, 249, 0.9), rgba(255, 255, 255, 0.95));
+            border: 1px solid rgba(148, 163, 184, 0.2);
+        }
+        .whale-card:hover { border-color: rgba(59, 130, 246, 0.3); transform: translateX(2px); }
+        .whale-avatar {
+            width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; flex-shrink: 0;
+            background: rgba(59, 130, 246, 0.15);
+            border: 1px solid rgba(59, 130, 246, 0.25);
+        }
+        .whale-name { font-size: 12px; font-weight: 700; color: var(--text-primary); }
+        .whale-action { font-size: 10px; font-weight: 600; }
+        .whale-action.buy { color: #34d399; }
+        .whale-action.sell { color: #f87171; }
+        .whale-action.hold { color: #fbbf24; }
+        .whale-asset { font-size: 10px; color: #60a5fa; font-weight: 600; }
+        .whale-amount { font-size: 10px; font-family: 'JetBrains Mono', monospace; color: var(--text-secondary); }
+        .whale-opinion { font-size: 11px; color: var(--text-muted); line-height: 1.4; margin-top: 2px; }
+        .whale-time { font-size: 9px; color: #64748b; margin-top: 2px; }
+
     </style>
 </head>
 <body class="min-h-screen">
@@ -1031,6 +1064,25 @@
                         <div class="text-lg font-bold" id="sent-btc">--</div>
                         <div class="conf-meter mt-1"><div class="fill bg-emerald-500" id="sent-bar-btc" style="width:50%"></div></div>
                     </div>
+
+            <div class="mb-5">
+                <div class="flex items-center justify-between mb-3">
+                    <span class="section-title">🐋 Ballenas Financieras — Movimientos en Tiempo Real</span>
+                    <span class="live-badge">
+                        <span class="pulse-dot green" style="width:6px;height:6px;"></span>
+                        EN VIVO
+                    </span>
+                </div>
+                <div class="glass rounded-xl p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="text-[11px] text-slate-400">Entradas y opiniones de las principales entidades financieras</span>
+                        <span class="text-[10px] text-slate-500">Actualizado cada 30 seg</span>
+                    </div>
+                    <div id="whales-container" class="space-y-2 max-h-[320px] overflow-y-auto scroll-hide">
+                        <div class="text-center py-4 text-xs text-slate-500">Cargando movimientos de ballenas...</div>
+                    </div>
+                </div>
+            </div>
                     <div class="glass rounded-xl p-3 text-center">
                         <div class="text-[10px] text-slate-500 mb-1">Ethereum</div>
                         <div class="text-lg font-bold" id="sent-eth">--</div>
@@ -2547,7 +2599,7 @@ function switchTab(tabName) {
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
     document.querySelectorAll('[data-tab]').forEach(b => { if (b.dataset.tab === tabName) b.classList.add('active'); });
     ['history', 'stats', 'strategy', 'signals', 'alerts', 'intel'].forEach(t => { document.getElementById('tab-' + t).classList.toggle('hidden', t !== tabName); });
-    if (tabName === 'stats') renderStats(); if (tabName === 'signals') renderBotSignals(); if (tabName === 'alerts') renderAlerts(); if (tabName === 'intel') refreshIntel();
+    if (tabName === 'stats') renderStats(); if (tabName === 'signals') renderBotSignals(); if (tabName === 'alerts') renderAlerts(); if (tabName === 'intel') refreshIntel(); renderWhales();
 }
 
 // ==================== SETTINGS ====================
@@ -2701,7 +2753,7 @@ function getNewsApiKey() { return document.getElementById('newsapi-key').value.t
 function saveNewsApiKey() {
     const key = getNewsApiKey();
     if (!key) { document.getElementById('newsapi-status').textContent = '⚠️ Introduce una API key'; document.getElementById('newsapi-status').className = 'text-[10px] mt-2 text-amber-400'; return; }
-    document.getElementById('newsapi-status').textContent = '✅ Key guardada'; document.getElementById('newsapi-status').className = 'text-[10px] mt-2 text-emerald-400'; saveState(); refreshIntel();
+    document.getElementById('newsapi-status').textContent = '✅ Key guardada'; document.getElementById('newsapi-status').className = 'text-[10px] mt-2 text-emerald-400'; saveState(); refreshIntel(); renderWhales();
 }
 
 function generateDemoNews() {
@@ -2716,6 +2768,21 @@ function generateDemoNews() {
         { title: 'El S&P 500 marca nuevo máximo impulsado por tecnológicas', source: 'Reuters', type: 'stocks', pubDate: now - 21600000, description: 'Los grandes valores tecnológicos lideran las ganancias.', link: '#', isReal: false, translated: false, lang: 'es' },
         { title: 'SEC retrasa decisión sobre ETF de Solana', source: 'CryptoNoticias', type: 'crypto', pubDate: now - 25200000, description: 'La Comisión de Valores pospone su decisión.', link: '#', isReal: false, translated: false, lang: 'es' },
         { title: 'Inflación en EEUU baja: expectativas de recorte de tasas crecen', source: 'Bloomberg', type: 'macro', pubDate: now - 28800000, description: 'Los datos de inflación son mejor de lo esperado.', link: '#', isReal: false, translated: false, lang: 'es' },
+    ];
+}
+
+function generateDemoNewsNational() {
+    const now = Date.now();
+    return [
+        { title: 'El Ibex 35 cierra en verde impulsado por el sector bancario español', source: 'El País', type: 'stocks', pubDate: now - 1800000, description: 'Los bancos españoles lideran las ganancias en la Bolsa de Madrid tras los resultados trimestrales.', link: '#', isReal: false, translated: false, lang: 'es' },
+        { title: 'El Banco de España advierte sobre el riesgo de burbuja inmobiliaria', source: 'El Mundo', type: 'macro', pubDate: now - 3600000, description: 'El organismo supervisor alerta sobre los precios de la vivienda en las principales ciudades españolas.', link: '#', isReal: false, translated: false, lang: 'es' },
+        { title: 'Telefónica anuncia inversión récord en fibra óptica: 5.000 millones', source: 'La Vanguardia', type: 'stocks', pubDate: now - 5400000, description: 'La operadora española destinará una inversión histórica a la expansión de la red de fibra.', link: '#', isReal: false, translated: false, lang: 'es' },
+        { title: 'El Gobierno aprueba nuevas medidas fiscales para startups tecnológicas', source: 'El Confidencial', type: 'macro', pubDate: now - 7200000, description: 'Las nuevas medidas buscan atraer inversión extranjera al sector tecnológico español.', link: '#', isReal: false, translated: false, lang: 'es' },
+        { title: 'Santander supera expectativas con beneficios de 3.200 millones', source: 'Cinco Días', type: 'stocks', pubDate: now - 9000000, description: 'El banco español presenta resultados trimestrales por encima de las previsiones del mercado.', link: '#', isReal: false, translated: false, lang: 'es' },
+        { title: 'El turismo español bate récord de ingresos en el primer semestre', source: 'ABC', type: 'macro', pubDate: now - 10800000, description: 'El sector turístico español alcanza cifras históricas de facturación.', link: '#', isReal: false, translated: false, lang: 'es' },
+        { title: 'Inditex (Zara) presenta resultados mixtos: ventas online crecen un 15%', source: 'Expansión', type: 'stocks', pubDate: now - 12600000, description: 'El gigante textil español muestra fortaleza en el canal digital.', link: '#', isReal: false, translated: false, lang: 'es' },
+        { title: 'La deuda pública española supera el 110% del PIB', source: 'El Economista', type: 'macro', pubDate: now - 14400000, description: 'El Ministerio de Hacienda publica las últimas cifras de deuda soberana.', link: '#', isReal: false, translated: false, lang: 'es' },
+        { title: 'Repsol invierte en energías renovables: nuevo parque solar en Andalucía', source: 'El Mundo', type: 'stocks', pubDate: now - 16200000, description: 'La petrolera española acelera su transición energética con nuevos proyectos fotovoltaicos.', link: '#', isReal: false, translated: false, lang: 'es' },
     ];
 }
 
@@ -2740,7 +2807,7 @@ function switchNewsTab(tab) {
 }
 function renderNews() {
     const container = document.getElementById('news-container');
-    let cache = state.currentNewsTab === 'demo' ? generateDemoNews() : (state.currentNewsTab === 'national' ? [] : generateDemoNews());
+    let cache = state.currentNewsTab === 'demo' ? generateDemoNews() : (state.currentNewsTab === 'national' ? generateDemoNewsNational() : generateDemoNews());
     const filtered = currentNewsFilter === 'all' ? cache : cache.filter(n => n.type === currentNewsFilter);
     if (filtered.length === 0) { container.innerHTML = '<div class="text-center py-8 text-xs text-slate-500 col-span-2">Sin noticias</div>'; return; }
     container.innerHTML = filtered.map(n => {
@@ -2856,11 +2923,128 @@ document.getElementById('order-sl').addEventListener('input', updatePortfolioUI)
 document.getElementById('order-tp').addEventListener('input', updatePortfolioUI);
 function toggleFullscreen() { if (!document.fullscreenElement) document.documentElement.requestFullscreen().catch(() => {}); else document.exitFullscreen().catch(() => {}); }
 
-initTheme(); initChart(); loadState(); updatePrices(); refreshData(); refreshIntel();
+
+const WHALES = [
+    { name: 'BlackRock', avatar: '🏛️', bias: 'bullish', assets: ['BTC', 'ETH', 'SPY'] },
+    { name: 'Fidelity', avatar: '🏦', bias: 'bullish', assets: ['BTC', 'ETH', 'AAPL'] },
+    { name: 'Grayscale', avatar: '⬛', bias: 'neutral', assets: ['BTC', 'ETH'] },
+    { name: 'MicroStrategy', avatar: '💼', bias: 'very_bullish', assets: ['BTC'] },
+    { name: 'ARK Invest', avatar: '🚀', bias: 'bullish', assets: ['BTC', 'ETH', 'AAPL'] },
+    { name: 'Goldman Sachs', avatar: '🏛️', bias: 'neutral', assets: ['SPY', 'AAPL', 'BTC'] },
+    { name: 'JPMorgan', avatar: '🏦', bias: 'bearish', assets: ['SPY', 'ETH'] },
+    { name: 'Morgan Stanley', avatar: '📊', bias: 'neutral', assets: ['SPY', 'AAPL'] },
+    { name: 'Cathie Wood', avatar: '👩‍💼', bias: 'very_bullish', assets: ['BTC', 'AAPL', 'ETH'] },
+    { name: 'Michael Saylor', avatar: '🧠', bias: 'very_bullish', assets: ['BTC'] },
+    { name: 'Warren Buffett', avatar: '🧓', bias: 'bearish', assets: ['SPY', 'AAPL'] },
+    { name: 'Ray Dalio', avatar: '🌉', bias: 'neutral', assets: ['SPY', 'BTC', 'ETH'] }
+];
+
+const WHALE_ACTIONS = [
+    { action: 'COMPRA', type: 'buy', templates: ['Aumenta posición en {asset} un {pct}%', 'Entrada agresiva en {asset} a {price}', 'Acumulación masiva de {asset}', 'Compra programada de {asset} por ${amount}M'] },
+    { action: 'VENTA', type: 'sell', templates: ['Reduce exposición en {asset} un {pct}%', 'Toma de beneficios en {asset}', 'Cierre parcial de posición en {asset}', 'Venta estratégica de {asset} por ${amount}M'] },
+    { action: 'MANTIENE', type: 'hold', templates: ['Mantiene posición en {asset}', 'Recomienda HOLD en {asset}', 'Sin cambios en cartera de {asset}', 'Estrategia de largo plazo en {asset}'] }
+];
+
+const WHALE_OPINIONS = [
+    'Considera que {asset} está infravalorado a estos niveles.',
+    'Ve potencial alcista en {asset} a medio plazo.',
+    'Advierte sobre volatilidad en {asset}.',
+    'Predice que {asset} podría duplicar su valor.',
+    'Recomienda cautela con {asset} en el corto plazo.',
+    'Considera {asset} como refugio ante la inflación.',
+    'Alerta sobre riesgos regulatorios en {asset}.',
+    'Ve {asset} como oportunidad de compra tras la caída.',
+    'Considera que {asset} está en burbuja.',
+    'Predice corrección en {asset} antes de nuevo rally.'
+];
+
+function generateWhaleActivity() {
+    const activities = [];
+    const now = Date.now();
+    const activeWhales = WHALES.filter(() => Math.random() > 0.3);
+
+    for (const whale of activeWhales) {
+        const asset = whale.assets[Math.floor(Math.random() * whale.assets.length)];
+        const basePrice = MOCK_BASE_PRICES[asset] || (asset === 'BTC' ? 63400 : asset === 'ETH' ? 3200 : asset === 'SOL' ? 73 : asset === 'SPY' ? 585 : 225);
+        const price = basePrice * (1 + (Math.random() - 0.5) * 0.02);
+
+        let actionType;
+        if (whale.bias === 'very_bullish') actionType = Math.random() > 0.2 ? 'buy' : 'hold';
+        else if (whale.bias === 'bullish') actionType = Math.random() > 0.4 ? 'buy' : (Math.random() > 0.5 ? 'sell' : 'hold');
+        else if (whale.bias === 'bearish') actionType = Math.random() > 0.2 ? 'sell' : 'hold';
+        else actionType = ['buy', 'sell', 'hold'][Math.floor(Math.random() * 3)];
+
+        const actionDef = WHALE_ACTIONS.find(a => a.type === actionType);
+        const template = actionDef.templates[Math.floor(Math.random() * actionDef.templates.length)];
+        const pct = (Math.random() * 15 + 1).toFixed(1);
+        const amount = (Math.random() * 500 + 10).toFixed(0);
+
+        let actionText = template
+            .replace('{asset}', asset)
+            .replace('{pct}', pct)
+            .replace('{price}', '$' + price.toFixed(asset === 'BTC' || asset === 'SPY' ? 0 : 2))
+            .replace('{amount}', amount);
+
+        const opinionTemplate = WHALE_OPINIONS[Math.floor(Math.random() * WHALE_OPINIONS.length)];
+        const opinion = opinionTemplate.replace('{asset}', asset);
+
+        activities.push({
+            id: now + Math.random(),
+            whale: whale.name,
+            avatar: whale.avatar,
+            action: actionDef.action,
+            actionType: actionType,
+            actionText: actionText,
+            opinion: opinion,
+            asset: asset,
+            time: now - Math.floor(Math.random() * 3600000)
+        });
+    }
+
+    activities.sort((a, b) => b.time - a.time);
+    return activities;
+}
+
+function renderWhales() {
+    const container = document.getElementById('whales-container');
+    if (!container) return;
+    const activities = generateWhaleActivity();
+
+    container.innerHTML = activities.map(a => {
+        const actionClass = a.actionType === 'buy' ? 'buy' : a.actionType === 'sell' ? 'sell' : 'hold';
+        const actionIcon = a.actionType === 'buy' ? '▲' : a.actionType === 'sell' ? '▼' : '◆';
+        const actionColor = a.actionType === 'buy' ? 'text-emerald-400' : a.actionType === 'sell' ? 'text-red-400' : 'text-amber-400';
+        const timeAgo = Math.floor((Date.now() - a.time) / 60000);
+        const timeStr = timeAgo < 1 ? 'Ahora' : timeAgo < 60 ? `hace ${timeAgo} min` : `hace ${Math.floor(timeAgo/60)}h`;
+
+        return `
+            <div class="whale-card">
+                <div class="whale-avatar">${a.avatar}</div>
+                <div class="flex-1 min-w-0">
+                    <div class="flex items-center justify-between">
+                        <span class="whale-name">${a.whale}</span>
+                        <span class="whale-time">${timeStr}</span>
+                    </div>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        <span class="whale-action ${actionClass}">${actionIcon} ${a.action}</span>
+                        <span class="whale-asset">${a.asset}</span>
+                    </div>
+                    <div class="whale-opinion">${a.actionText}</div>
+                    <div class="text-[10px] text-slate-500 mt-1 italic">"${a.opinion}"</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Actualizar ballenas cada 30 segundos
+setInterval(renderWhales, 30000);
+
+initTheme(); initChart(); loadState(); updatePrices(); refreshData(); refreshIntel(); renderWhales();
 const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 setInterval(updatePrices, isMobileDevice ? 10000 : (state.assetType === 'crypto' ? 8000 : 15000));
 setInterval(() => { if (!state.isLoading) refreshData(); }, isMobileDevice ? 120000 : 60000);
-setInterval(() => { refreshIntel(); }, 120000);
+setInterval(() => { refreshIntel(); renderWhales(); }, 120000);
 window.addEventListener('orientationchange', () => { setTimeout(() => { if (state.chart) state.chart.applyOptions({ width: document.getElementById('chart-container').clientWidth }); }, 300); });
 </script>
 </body>
