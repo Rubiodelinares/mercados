@@ -1232,6 +1232,10 @@
             </div>
 
             <div class="flex items-center gap-1 mb-4 border-b border-slate-700/40 pb-2">
+                <button class="tab-btn active" onclick="switchNewsTab('global')" data-news-tab="global">🌍 Noticias Globales</button>
+                <button class="tab-btn" onclick="switchNewsTab('national')" data-news-tab="national">🇪🇸 Noticias Nacionales</button>
+            </div>
+            <div class="flex items-center gap-1 mb-4">
                 <span class="text-[11px] text-slate-400 mr-2">Filtros:</span>
                 <button class="tab-btn active" onclick="filterNews('all')" data-news-filter="all">Todas</button>
                 <button class="tab-btn" onclick="filterNews('crypto')" data-news-filter="crypto">Crypto</button>
@@ -1290,7 +1294,7 @@
             <div class="mb-5">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-3">
-                        <span class="section-title" id="news-section-title">📰 Noticias Reales en Vivo</span>
+                        <span class="section-title" id="news-section-title">📰 Noticias Reales</span>
                         <span class="text-[10px] text-slate-500" id="news-source-label">Fuentes: GNews, NewsData.io, NewsAPI</span>
                     </div>
                     <div class="flex gap-2">
@@ -1744,32 +1748,39 @@ async function fetchIEXQuote(symbol) {
 async function fetchCoinGeckoKlines(symbol, interval, limit = 400) {
     const idMap = { 'BTCUSDT': 'bitcoin', 'ETHUSDT': 'ethereum', 'SOLUSDT': 'solana' };
     const id = idMap[symbol] || 'bitcoin';
-    const days = interval === '15m' ? 1 : interval === '1h' ? 7 : interval === '4h' ? 30 : 90;
-    const url = `https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=${days}`;
+    // CoinGecko OHLC API: days=1 → 5min, days=7 → 1h, days=30 → 4h, days=90 → 1d
+    const daysMap = { '15m': 1, '1h': 7, '4h': 30, '1d': 90 };
+    const days = daysMap[interval] || 7;
+    const url = `https://api.coingecko.com/api/v3/coins/${id}/ohlc?vs_currency=usd&days=${days}`;
     const data = await fetchWithRetry(url, {}, 2, 15000);
-    if (!data || !data.prices || !Array.isArray(data.prices)) throw new Error('CoinGecko: sin datos');
-    const prices = data.prices;
-    const volumes = data.total_volumes || [];
-    const candles = [];
-    const intervalMs = interval === '15m' ? 900000 : interval === '1h' ? 3600000 : interval === '4h' ? 14400000 : 86400000;
-    let currentBucket = null;
-    for (let i = 0; i < prices.length; i++) {
-        const time = Math.floor(prices[i][0] / 1000);
-        const price = prices[i][1];
-        const vol = volumes[i] ? volumes[i][1] : 0;
-        const bucketTime = Math.floor(time / (intervalMs / 1000)) * (intervalMs / 1000);
-        if (!currentBucket || currentBucket.time !== bucketTime) {
-            if (currentBucket) candles.push(currentBucket);
-            currentBucket = { time: bucketTime, open: price, high: price, low: price, close: price, volume: vol };
-        } else {
-            currentBucket.high = Math.max(currentBucket.high, price);
-            currentBucket.low = Math.min(currentBucket.low, price);
-            currentBucket.close = price;
-            currentBucket.volume += vol;
+    if (!data || !Array.isArray(data) || data.length === 0) throw new Error('CoinGecko OHLC: sin datos');
+    // CoinGecko OHLC devuelve: [[timestamp, open, high, low, close], ...]
+    let candles = data.map(d => ({
+        time: Math.floor(d[0] / 1000),
+        open: d[1],
+        high: d[2],
+        low: d[3],
+        close: d[4],
+        volume: 0
+    }));
+    // Para 15m, agrupar datos de 5m en grupos de 3
+    if (interval === '15m' && candles.length > 0) {
+        const grouped = [];
+        for (let i = 0; i < candles.length; i += 3) {
+            const group = candles.slice(i, i + 3);
+            if (group.length === 0) continue;
+            grouped.push({
+                time: group[0].time,
+                open: group[0].open,
+                high: Math.max(...group.map(c => c.high)),
+                low: Math.min(...group.map(c => c.low)),
+                close: group[group.length - 1].close,
+                volume: 0
+            });
         }
+        candles = grouped;
     }
-    if (currentBucket) candles.push(currentBucket);
-    if (candles.length < 50) throw new Error('CoinGecko: datos insuficientes');
+    if (candles.length < 10) throw new Error('CoinGecko OHLC: datos insuficientes');
     return candles.slice(-limit);
 }
 
@@ -2180,9 +2191,45 @@ function drawMiniChart(containerId, candles, color) {
 async function fetchMTFData() {
     try {
         let candles4h, candles1d;
-        try { candles4h = state.assetType === 'crypto' ? await fetchCoinGeckoKlines(state.symbol, '4h', 200) : await getStockCandles(state.symbol, '4h'); }
+        try { 
+            if (state.assetType === 'crypto') {
+                try { candles4h = await fetchCoinGeckoKlines(state.symbol, '4h', 200); }
+                catch (cgErr) {
+                    try {
+                        const ySym = state.symbol.replace('USDT', '-USD');
+                        const json = await fetchWithRetry(`https://query1.finance.yahoo.com/v8/finance/chart/${ySym}?interval=1h&range=3mo`, {}, 1, 10000);
+                        if (json.chart && json.chart.result && json.chart.result.length > 0) {
+                            const result = json.chart.result[0]; const q = result.indicators.quote[0]; const timestamps = result.timestamp;
+                            candles4h = [];
+                            for (let i = 0; i < timestamps.length; i++) {
+                                if (q.open[i] === null) continue;
+                                candles4h.push({ time: timestamps[i], open: q.open[i], high: q.high[i], low: q.low[i], close: q.close[i], volume: q.volume[i] || 0 });
+                            }
+                        } else { throw new Error('Yahoo: sin datos'); }
+                    } catch (yErr) { candles4h = state.candles.slice(-200); }
+                }
+            } else { candles4h = await getStockCandles(state.symbol, '4h'); }
+        }
         catch (e) { console.warn('MTF 4H error:', e.message); candles4h = state.candles.slice(-200); }
-        try { candles1d = state.assetType === 'crypto' ? await fetchCoinGeckoKlines(state.symbol, '1d', 100) : await getStockCandles(state.symbol, '1d'); }
+        try { 
+            if (state.assetType === 'crypto') {
+                try { candles1d = await fetchCoinGeckoKlines(state.symbol, '1d', 100); }
+                catch (cgErr) {
+                    try {
+                        const ySym = state.symbol.replace('USDT', '-USD');
+                        const json = await fetchWithRetry(`https://query1.finance.yahoo.com/v8/finance/chart/${ySym}?interval=1d&range=1y`, {}, 1, 10000);
+                        if (json.chart && json.chart.result && json.chart.result.length > 0) {
+                            const result = json.chart.result[0]; const q = result.indicators.quote[0]; const timestamps = result.timestamp;
+                            candles1d = [];
+                            for (let i = 0; i < timestamps.length; i++) {
+                                if (q.open[i] === null) continue;
+                                candles1d.push({ time: timestamps[i], open: q.open[i], high: q.high[i], low: q.low[i], close: q.close[i], volume: q.volume[i] || 0 });
+                            }
+                        } else { throw new Error('Yahoo: sin datos'); }
+                    } catch (yErr) { candles1d = state.candles.slice(-100); }
+                }
+            } else { candles1d = await getStockCandles(state.symbol, '1d'); }
+        }
         catch (e) { console.warn('MTF 1D error:', e.message); candles1d = state.candles.slice(-100); }
         if (!candles4h || candles4h.length < 50 || !candles1d || candles1d.length < 50) throw new Error('Datos MTF insuficientes');
         const ema200_4h = calculateEMA(candles4h, 200); const rsi4h = calculateRSI(candles4h, 14);
@@ -2234,10 +2281,14 @@ function showStockWarning() {
     const sourceLabel = document.getElementById('stock-data-source');
     banner.classList.remove('hidden');
     if (state.usingMock) {
-        sourceLabel.textContent = state.assetType === 'stock' ? 'Usando simulación realista. Para datos reales de SPY/AAPL, abre desde un servidor web o configura API key (Finnhub, Alpha Vantage, Twelve Data).' : 'Usando simulación realista.';
+        if (state.assetType === 'crypto') {
+            sourceLabel.innerHTML = '⚠️ CoinGecko/Yahoo no disponibles (rate limit o CORS). Datos simulados. <strong>Abre desde un servidor web</strong> (localhost, GitHub Pages, VS Code Live Server) para datos reales.';
+        } else {
+            sourceLabel.innerHTML = '⚠️ Usando simulación realista. Para datos reales de SPY/AAPL, <strong>abre desde un servidor web</strong> o configura API key (Finnhub, Alpha Vantage, Twelve Data).';
+        }
         sourceLabel.style.color = '#fbbf24';
     } else {
-        sourceLabel.textContent = `Datos reales vía ${state.dataSource}.`;
+        sourceLabel.textContent = `✅ Datos reales vía ${state.dataSource}.`;
         sourceLabel.style.color = '#4ade80';
     }
 }
@@ -2297,8 +2348,43 @@ function updateIndicatorsUI(indicators, candles) {
 async function updatePrices() {
     try {
         let ticker;
-        if (state.assetType === 'crypto') ticker = await fetchCoinGeckoTicker(state.symbol);
-        else ticker = await getStockQuote(state.symbol);
+        if (state.assetType === 'crypto') {
+            try {
+                ticker = await fetchCoinGeckoTicker(state.symbol);
+                state.dataSource = 'CoinGecko (real)';
+                state.usingMock = false;
+            } catch (cgErr) {
+                // Fallback a Yahoo Finance para crypto
+                try {
+                    const ySym = state.symbol.replace('USDT', '-USD');
+                    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ySym}?interval=1d&range=2d`;
+                    const json = await fetchWithRetry(url, {}, 1, 10000);
+                    if (json.chart && json.chart.result && json.chart.result.length > 0) {
+                        const r = json.chart.result[0]; const q = r.indicators.quote[0];
+                        const lastIdx = q.close.length - 1; const prevClose = q.close[lastIdx - 1] || q.close[lastIdx];
+                        const change = ((q.close[lastIdx] - prevClose) / prevClose * 100);
+                        ticker = {
+                            lastPrice: q.close[lastIdx].toString(),
+                            priceChangePercent: change.toString(),
+                            highPrice: (r.meta.regularMarketDayHigh || Math.max(...q.high.filter(v => v !== null))).toString(),
+                            lowPrice: (r.meta.regularMarketDayLow || Math.min(...q.low.filter(v => v !== null))).toString(),
+                            volume: (q.volume[lastIdx] || 0).toString()
+                        };
+                        state.dataSource = 'Yahoo Finance (real)';
+                        state.usingMock = false;
+                    } else {
+                        throw new Error('Yahoo: sin datos');
+                    }
+                } catch (yErr) {
+                    // Fallback a simulación
+                    ticker = generateMockTicker(state.symbol);
+                    state.dataSource = 'Simulación (CoinGecko/Yahoo no disponibles)';
+                    state.usingMock = true;
+                }
+            }
+        } else {
+            ticker = await getStockQuote(state.symbol);
+        }
         const price = parseFloat(ticker.lastPrice);
         const change = parseFloat(ticker.priceChangePercent);
         if (!isNaN(price) && price > 0) {
@@ -2768,10 +2854,38 @@ async function refreshData() {
                 state.usingMock = true;
                 candles = generateMockCandles(state.symbol, state.interval, 400);
             } else {
-                showSignalError('Error de conexión: ' + e.message, true);
-                state.isLoading = false;
-                document.getElementById('chart-loading').style.display = 'none';
-                return;
+                // Fallback para crypto: intentar Yahoo Finance
+                try {
+                    const ySym = state.symbol.replace('USDT', '-USD');
+                    const yfInterval = state.interval === '15m' ? '15m' : state.interval === '1h' ? '1h' : state.interval === '4h' ? '4h' : '1d';
+                    const yfRange = state.interval === '15m' ? '1mo' : state.interval === '1h' ? '3mo' : state.interval === '4h' ? '6mo' : '1y';
+                    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ySym}?interval=${yfInterval}&range=${yfRange}`;
+                    const json = await fetchWithRetry(url, {}, 1, 10000);
+                    if (json.chart && json.chart.result && json.chart.result.length > 0) {
+                        const result = json.chart.result[0];
+                        const timestamps = result.timestamp;
+                        const q = result.indicators.quote[0];
+                        candles = [];
+                        for (let i = 0; i < timestamps.length; i++) {
+                            if (q.open[i] === null || q.open[i] === undefined) continue;
+                            candles.push({ time: timestamps[i], open: q.open[i], high: q.high[i], low: q.low[i], close: q.close[i], volume: q.volume[i] || 0 });
+                        }
+                        if (candles.length >= 50) {
+                            state.dataSource = 'Yahoo Finance (real)';
+                            state.usingMock = false;
+                        } else {
+                            throw new Error('Yahoo: datos insuficientes');
+                        }
+                    } else {
+                        throw new Error('Yahoo: sin datos');
+                    }
+                } catch (yErr) {
+                    console.warn('Yahoo fallback falló:', yErr.message);
+                    // Último fallback: simulación realista
+                    state.usingMock = true;
+                    candles = generateMockCandles(state.symbol, state.interval, 400);
+                    state.dataSource = 'Simulación (CoinGecko/Yahoo no disponibles)';
+                }
             }
         }
 
@@ -3044,56 +3158,76 @@ async function fetchRealNews() {
     const gnewsKey = document.getElementById('gnews-key')?.value?.trim() || '';
     const newsdataKey = document.getElementById('newsdata-key')?.value?.trim() || '';
     const newsapiKey = document.getElementById('newsapi-key')?.value?.trim() || '';
+    const isNational = state.currentNewsTab === 'national';
 
     const allNews = [];
     const errors = [];
 
-    // Noticias en español
-    if (gnewsKey) {
-        try {
-            const esNews = await fetchGNews(gnewsKey, 'economía OR bolsa OR mercados OR bitcoin', 'es', 10);
-            allNews.push(...esNews.map(n => ({ ...n, lang: 'es' })));
-        } catch (e) { errors.push('GNews ES: ' + e.message); }
-    }
-    if (newsdataKey) {
-        try {
-            const esNews = await fetchNewsDataIo(newsdataKey, 'economy OR stock OR market OR crypto', 'es', 10);
-            allNews.push(...esNews.map(n => ({ ...n, lang: 'es' })));
-        } catch (e) { errors.push('NewsData.io ES: ' + e.message); }
-    }
-
-    // Noticias en inglés (internacionales)
-    if (gnewsKey) {
-        try {
-            const enNews = await fetchGNews(gnewsKey, 'bitcoin OR ethereum OR crypto OR stock market OR fed OR inflation', 'en', 10);
-            allNews.push(...enNews.map(n => ({ ...n, lang: 'en' })));
-        } catch (e) { errors.push('GNews EN: ' + e.message); }
-    }
-    if (newsdataKey) {
-        try {
-            const enNews = await fetchNewsDataIo(newsdataKey, 'bitcoin OR ethereum OR crypto OR stock market OR fed OR inflation', 'en', 10);
-            allNews.push(...enNews.map(n => ({ ...n, lang: 'en' })));
-        } catch (e) { errors.push('NewsData.io EN: ' + e.message); }
-    }
-
-    // Fallback a NewsAPI (solo si está en localhost/GitHub Pages con key)
-    if (newsapiKey && allNews.length === 0) {
-        try {
-            const url = `https://newsapi.org/v2/everything?q=bitcoin OR crypto OR stock market&language=en&sortBy=publishedAt&pageSize=10&apiKey=${newsapiKey}`;
-            const data = await fetchWithRetry(url, {}, 1, 15000);
-            if (data && data.articles) {
-                allNews.push(...data.articles.map(a => ({
-                    title: a.title,
-                    source: a.source?.name || 'NewsAPI',
-                    type: 'macro',
-                    pubDate: new Date(a.publishedAt).getTime(),
-                    description: a.description || '',
-                    link: a.url,
-                    isReal: true,
-                    lang: 'en'
-                })));
-            }
-        } catch (e) { errors.push('NewsAPI: ' + e.message); }
+    if (isNational) {
+        // ========== NOTICIAS NACIONALES (ESPAÑA) ==========
+        if (gnewsKey) {
+            try {
+                const esNews = await fetchGNews(gnewsKey, 'economía OR bolsa OR mercados OR Ibex OR España OR Banco Santander OR Telefónica', 'es', 15);
+                allNews.push(...esNews.map(n => ({ ...n, lang: 'es' })));
+            } catch (e) { errors.push('GNews ES: ' + e.message); }
+        }
+        if (newsdataKey) {
+            try {
+                const esNews = await fetchNewsDataIo(newsdataKey, 'economy Spain OR Ibex OR Madrid stock OR Spanish banks', 'es', 15);
+                allNews.push(...esNews.map(n => ({ ...n, lang: 'es' })));
+            } catch (e) { errors.push('NewsData.io ES: ' + e.message); }
+        }
+        // NewsAPI en español (solo localhost)
+        if (newsapiKey && allNews.length === 0) {
+            try {
+                const url = `https://newsapi.org/v2/everything?q=economía OR bolsa OR mercados OR Ibex&language=es&sortBy=publishedAt&pageSize=15&apiKey=${newsapiKey}`;
+                const data = await fetchWithRetry(url, {}, 1, 15000);
+                if (data && data.articles) {
+                    allNews.push(...data.articles.map(a => ({
+                        title: a.title,
+                        source: a.source?.name || 'NewsAPI',
+                        type: 'macro',
+                        pubDate: new Date(a.publishedAt).getTime(),
+                        description: a.description || '',
+                        link: a.url,
+                        isReal: true,
+                        lang: 'es'
+                    })));
+                }
+            } catch (e) { errors.push('NewsAPI ES: ' + e.message); }
+        }
+    } else {
+        // ========== NOTICIAS GLOBALES ==========
+        if (gnewsKey) {
+            try {
+                const enNews = await fetchGNews(gnewsKey, 'bitcoin OR ethereum OR crypto OR stock market OR fed OR inflation OR S&P 500', 'en', 15);
+                allNews.push(...enNews.map(n => ({ ...n, lang: 'en' })));
+            } catch (e) { errors.push('GNews EN: ' + e.message); }
+        }
+        if (newsdataKey) {
+            try {
+                const enNews = await fetchNewsDataIo(newsdataKey, 'bitcoin OR ethereum OR crypto OR stock market OR fed OR inflation', 'en', 15);
+                allNews.push(...enNews.map(n => ({ ...n, lang: 'en' })));
+            } catch (e) { errors.push('NewsData.io EN: ' + e.message); }
+        }
+        if (newsapiKey && allNews.length === 0) {
+            try {
+                const url = `https://newsapi.org/v2/everything?q=bitcoin OR crypto OR stock market&language=en&sortBy=publishedAt&pageSize=15&apiKey=${newsapiKey}`;
+                const data = await fetchWithRetry(url, {}, 1, 15000);
+                if (data && data.articles) {
+                    allNews.push(...data.articles.map(a => ({
+                        title: a.title,
+                        source: a.source?.name || 'NewsAPI',
+                        type: 'macro',
+                        pubDate: new Date(a.publishedAt).getTime(),
+                        description: a.description || '',
+                        link: a.url,
+                        isReal: true,
+                        lang: 'en'
+                    })));
+                }
+            } catch (e) { errors.push('NewsAPI: ' + e.message); }
+        }
     }
 
     if (allNews.length === 0 && errors.length > 0) {
@@ -3124,7 +3258,9 @@ function analyzeNewsImpact(title, desc) {
 
 let currentNewsFilter = 'all';
 function switchNewsTab(tab) {
-    // Deprecated: all news are now real and filtered by type
+    state.currentNewsTab = tab;
+    document.querySelectorAll('[data-news-tab]').forEach(b => b.classList.remove('active'));
+    document.querySelector(`[data-news-tab="${tab}"]`).classList.add('active');
     renderNews();
 }
 async function renderNews() {
