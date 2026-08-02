@@ -2218,7 +2218,17 @@ function updateIndicatorsUI(indicators, candles) {
     const volRatio = volMA > 0 ? volume / volMA : 1; document.getElementById('vol-value').textContent = volRatio.toFixed(2) + 'x';
     document.getElementById('vol-bar').style.width = Math.min(volRatio / 3 * 100, 100) + '%';
     document.getElementById('vol-bar').className = 'fill ' + (volRatio >= 1.5 ? 'bg-emerald-500' : volRatio >= 1.0 ? 'bg-amber-500' : 'bg-slate-700');
-    document.getElementById('strength-value').textContent = '--'; document.getElementById('strength-bar').style.width = '0%';
+    // Calcular fuerza de señal real con el algoritmo de estrategia
+    const signal = analyzeSignal(candles, indicators, state.symbol, state.interval);
+    if (signal && signal.score) {
+        document.getElementById('strength-value').textContent = signal.score + '/100';
+        document.getElementById('strength-bar').style.width = Math.min(signal.score, 100) + '%';
+        document.getElementById('strength-bar').className = 'fill ' + (signal.score >= 70 ? 'bg-emerald-500' : signal.score >= 50 ? 'bg-amber-500' : 'bg-red-500');
+    } else {
+        document.getElementById('strength-value').textContent = '0/100';
+        document.getElementById('strength-bar').style.width = '0%';
+        document.getElementById('strength-bar').className = 'fill bg-slate-700';
+    }
 }
 
 // ==================== PRECIOS Y POSICIONES ====================
