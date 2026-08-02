@@ -2125,94 +2125,74 @@ CryptoSignal Pro v4.8`
         return null;
     }
 
-    const MOCK_BASE_PRICES = { 'SPY': 575, 'AAPL': 225, 'BTC': 67500, 'ETH': 3450, 'SOL': 145 };
-    const MOCK_VOLATILITY = { 'SPY': 0.003, 'AAPL': 0.005, 'BTC': 0.008, 'ETH': 0.01, 'SOL': 0.012 };
+    // Precios base REALES de mercado (agosto 2026)
+    // SPY: ~$747 | AAPL: ~$309 | BTC: ~$63,400 | ETH: ~$3,200 | SOL: ~$73
+    const MOCK_BASE_PRICES = { 'SPY': 747, 'AAPL': 309, 'BTC': 63400, 'ETH': 3200, 'SOL': 73 };
+    const MOCK_VOLATILITY = { 'SPY': 0.003, 'AAPL': 0.005, 'BTC': 0.008, 'ETH': 0.01, 'SOL': 0.015 };
+    const MOCK_TREND = { 'SPY': 0.00005, 'AAPL': 0.0001, 'BTC': 0.0002, 'ETH': 0.0003, 'SOL': 0.0004 };
 
     function generateMockCandles(symbol, interval, count = 400) {
-        try {
-            const cleanSymbol = String(symbol || 'BTC').replace('USDT', '');
-            const basePrice = MOCK_BASE_PRICES[cleanSymbol] || 100;
-            const volatility = MOCK_VOLATILITY[cleanSymbol] || 0.004;
-            const trend = MOCK_TREND[cleanSymbol] || 0;
-            const now = Math.floor(Date.now() / 1000);
-            const intervalSeconds = interval === '15m' ? 900 : interval === '1h' ? 3600 : interval === '4h' ? 14400 : 86400;
-            const candles = [];
-            let price = basePrice;
-            const isStock = !String(symbol).includes('USDT');
-            const timeSeed = Math.floor(now / 60);
-            const seedBase = (cleanSymbol.split('').reduce((a, c) => a + (c.charCodeAt(0) || 0), 0) || 100) + (String(interval).length * 1000) + timeSeed;
+        const cleanSymbol = String(symbol || 'BTC').replace('USDT', '');
+        const basePrice = MOCK_BASE_PRICES[cleanSymbol] || 100;
+        const volatility = MOCK_VOLATILITY[cleanSymbol] || 0.004;
+        const trend = (MOCK_TREND && MOCK_TREND[cleanSymbol]) || 0;
+        const now = Math.floor(Date.now() / 1000);
+        const intervalSeconds = interval === '15m' ? 900 : interval === '1h' ? 3600 : interval === '4h' ? 14400 : 86400;
+        const candles = [];
+        let price = basePrice;
+        const isStock = !String(symbol).includes('USDT');
+        const timeSeed = Math.floor(now / 60);
+        const seedBase = (cleanSymbol.split('').reduce((a, c) => a + (c.charCodeAt(0) || 0), 0) || 100) + (String(interval).length * 1000) + timeSeed;
 
-            for (let i = count; i >= 0; i--) {
-                const time = now - (i * intervalSeconds);
-                const rand = seededRandom(seedBase + i + Math.floor(time / 86400));
-                let sessionMultiplier = 1;
-                if (isStock) {
-                    const date = new Date(time * 1000);
-                    const hourET = (date.getUTCHours() - 4 + 24) % 24;
-                    const dayOfWeek = date.getUTCDay();
-                    if (dayOfWeek === 0 || dayOfWeek === 6 || hourET < 9 || hourET >= 16) {
-                        sessionMultiplier = 0.3;
-                    } else if (hourET === 9 || hourET === 15) {
-                        sessionMultiplier = 1.5;
-                    }
+        for (let i = count; i >= 0; i--) {
+            const time = now - (i * intervalSeconds);
+            const rand = seededRandom(seedBase + i + Math.floor(time / 86400));
+            let sessionMultiplier = 1;
+            if (isStock) {
+                const date = new Date(time * 1000);
+                const hourET = (date.getUTCHours() - 4 + 24) % 24;
+                const dayOfWeek = date.getUTCDay();
+                if (dayOfWeek === 0 || dayOfWeek === 6 || hourET < 9 || hourET >= 16) {
+                    sessionMultiplier = 0.3;
+                } else if (hourET === 9 || hourET === 15) {
+                    sessionMultiplier = 1.5;
                 }
-                const trendComponent = trend * (count - i) / count;
-                const change = ((rand() - 0.5) * volatility * 2 + trendComponent) * sessionMultiplier;
-                const open = price;
-                const close = price * (1 + change);
-                const high = Math.max(open, close) * (1 + Math.abs(rand() * volatility * sessionMultiplier));
-                const low = Math.min(open, close) * (1 - Math.abs(rand() * volatility * sessionMultiplier));
-                const volume = Math.floor((1000000 + rand() * 5000000) * (intervalSeconds / 3600) * (isStock ? 0.5 : 1));
-                candles.push({ time, open, high, low, close, volume });
-                price = close;
             }
-            return candles;
-        } catch (err) {
-            console.error('Error en generateMockCandles:', err);
-            // Fallback absoluto: velas mínimas válidas
-            const now = Math.floor(Date.now() / 1000);
-            const intervalSeconds = 3600;
-            const candles = [];
-            let price = 100;
-            for (let i = count; i >= 0; i--) {
-                const time = now - (i * intervalSeconds);
-                const change = (Math.random() - 0.5) * 0.01;
-                const open = price;
-                const close = price * (1 + change);
-                candles.push({ time, open, high: Math.max(open, close) * 1.002, low: Math.min(open, close) * 0.998, close, volume: 1000000 });
-                price = close;
-            }
-            return candles;
+            const trendComponent = trend * (count - i) / count;
+            const change = ((rand() - 0.5) * volatility * 2 + trendComponent) * sessionMultiplier;
+            const open = price;
+            const close = price * (1 + change);
+            const high = Math.max(open, close) * (1 + Math.abs(rand() * volatility * sessionMultiplier));
+            const low = Math.min(open, close) * (1 - Math.abs(rand() * volatility * sessionMultiplier));
+            const volume = Math.floor((1000000 + rand() * 5000000) * (intervalSeconds / 3600) * (isStock ? 0.5 : 1));
+            candles.push({ time, open, high, low, close, volume });
+            price = close;
         }
+        return candles;
     }
     function generateMockTicker(symbol) {
-        try {
-            const cleanSymbol = String(symbol || 'BTC').replace('USDT', '');
-            const basePrice = MOCK_BASE_PRICES[cleanSymbol] || 100;
-            const volatility = MOCK_VOLATILITY[cleanSymbol] || 0.004;
-            const isStock = !String(symbol).includes('USDT');
-            const now = Date.now();
-            const seed = (cleanSymbol.split('').reduce((a, c) => a + (c.charCodeAt(0) || 0), 0) || 100) + Math.floor(now / 15000);
-            const rand = seededRandom(seed);
-            const date = new Date();
-            const hourET = (date.getUTCHours() - 4 + 24) % 24;
-            const dayProgress = Math.max(0, Math.min(1, (hourET - 9.5) / 6.5));
-            const intradayTrend = isStock ? Math.sin(dayProgress * Math.PI) * 0.002 : 0;
-            const change = (rand() - 0.5) * volatility * 100 + (intradayTrend * 100);
-            const price = basePrice * (1 + change / 100);
-            const high = price * (1 + Math.abs(rand() * volatility * 1.2));
-            const low = price * (1 - Math.abs(rand() * volatility * 1.2));
-            return {
-                lastPrice: price.toFixed(2),
-                priceChangePercent: change.toFixed(2),
-                highPrice: high.toFixed(2),
-                lowPrice: low.toFixed(2),
-                volume: Math.floor((isStock ? 20000000 : 5000000) + rand() * 10000000).toString()
-            };
-        } catch (err) {
-            console.error('Error en generateMockTicker:', err);
-            return { lastPrice: '100.00', priceChangePercent: '0.00', highPrice: '101.00', lowPrice: '99.00', volume: '1000000' };
-        }
+        const cleanSymbol = String(symbol || 'BTC').replace('USDT', '');
+        const basePrice = MOCK_BASE_PRICES[cleanSymbol] || 100;
+        const volatility = MOCK_VOLATILITY[cleanSymbol] || 0.004;
+        const isStock = !String(symbol).includes('USDT');
+        const now = Date.now();
+        const seed = (cleanSymbol.split('').reduce((a, c) => a + (c.charCodeAt(0) || 0), 0) || 100) + Math.floor(now / 15000);
+        const rand = seededRandom(seed);
+        const date = new Date();
+        const hourET = (date.getUTCHours() - 4 + 24) % 24;
+        const dayProgress = Math.max(0, Math.min(1, (hourET - 9.5) / 6.5));
+        const intradayTrend = isStock ? Math.sin(dayProgress * Math.PI) * 0.002 : 0;
+        const change = (rand() - 0.5) * volatility * 100 + (intradayTrend * 100);
+        const price = basePrice * (1 + change / 100);
+        const high = price * (1 + Math.abs(rand() * volatility * 1.2));
+        const low = price * (1 - Math.abs(rand() * volatility * 1.2));
+        return {
+            lastPrice: price.toFixed(2),
+            priceChangePercent: change.toFixed(2),
+            highPrice: high.toFixed(2),
+            lowPrice: low.toFixed(2),
+            volume: Math.floor((isStock ? 20000000 : 5000000) + rand() * 10000000).toString()
+        };
     }
 
     async function fetchBinanceKlines(symbol, interval, limit = 400) {
@@ -2524,6 +2504,8 @@ CryptoSignal Pro v4.8`
             slPrice, tpPrice, trailingStop: trailing ? (direction === 'BUY' ? entryPrice * (1 - CONFIG.trailingStopPct) : entryPrice * (1 + CONFIG.trailingStopPct)) : null,
             trailingEnabled: trailing, highestPrice: entryPrice, lowestPrice: entryPrice, commission, slippage, entryTime: Date.now(), unrealizedPnl: -commission - slippage
         };
+        // Guardar precio actual del activo en state.prices
+        state.prices[state.symbol] = entryPrice;
         state.portfolio.positions.push(position); state.portfolio.available -= amount;
         updatePortfolioUI(); renderPositions(); playTradeSound(); saveState();
         addAlert(direction === 'BUY' ? 'buy' : 'sell', direction === 'BUY' ? 'Compra ejecutada' : 'Venta ejecutada',
@@ -2532,7 +2514,12 @@ CryptoSignal Pro v4.8`
     function closePosition(positionId, currentPrice) {
         const idx = state.portfolio.positions.findIndex(p => p.id === positionId);
         if (idx === -1) return; const pos = state.portfolio.positions[idx];
-        const exitPrice = currentPrice || state.prices[pos.symbol] || state.currentPrice; 
+        let exitPrice = currentPrice || state.prices[pos.symbol];
+        if (!exitPrice || exitPrice <= 0) {
+            const mock = generateMockTicker(pos.symbol);
+            exitPrice = parseFloat(mock.lastPrice);
+            state.prices[pos.symbol] = exitPrice;
+        }
         if (!exitPrice || exitPrice <= 0) return;
         let grossPnl = 0;
         if (pos.type === 'BUY') grossPnl = (exitPrice - pos.entryPrice) * pos.quantity; else grossPnl = (pos.entryPrice - exitPrice) * pos.quantity;
@@ -2546,7 +2533,14 @@ CryptoSignal Pro v4.8`
     function updatePositions() {
         let changed = false;
         for (const pos of state.portfolio.positions) {
-            const posPrice = state.prices[pos.symbol] || state.currentPrice;
+            // OBTENER PRECIO CORRECTO DEL ACTIVO DE LA POSICIÓN - NUNCA usar currentPrice de otro activo
+            let posPrice = state.prices[pos.symbol];
+            // Si no hay precio guardado, generar uno realista para este activo específico
+            if (!posPrice || posPrice <= 0) {
+                const mock = generateMockTicker(pos.symbol);
+                posPrice = parseFloat(mock.lastPrice);
+                state.prices[pos.symbol] = posPrice;
+            }
             if (!posPrice || posPrice <= 0) continue;
             if (posPrice > pos.highestPrice) pos.highestPrice = posPrice; 
             if (posPrice < pos.lowestPrice) pos.lowestPrice = posPrice;
@@ -2580,7 +2574,12 @@ CryptoSignal Pro v4.8`
     function getPositionsValue() {
         let val = 0;
         for (const pos of state.portfolio.positions) {
-            const posPrice = state.prices[pos.symbol] || state.currentPrice;
+            let posPrice = state.prices[pos.symbol];
+            if (!posPrice || posPrice <= 0) {
+                const mock = generateMockTicker(pos.symbol);
+                posPrice = parseFloat(mock.lastPrice);
+                state.prices[pos.symbol] = posPrice;
+            }
             if (!posPrice) continue;
             if (pos.type === 'BUY') val += pos.quantity * posPrice; 
             else val += pos.amount + ((pos.entryPrice - posPrice) * pos.quantity);
@@ -2588,7 +2587,12 @@ CryptoSignal Pro v4.8`
         return val;
     }
     function getUnrealizedPnl(pos) {
-        const posPrice = state.prices[pos.symbol] || state.currentPrice;
+        let posPrice = state.prices[pos.symbol];
+        if (!posPrice || posPrice <= 0) {
+            const mock = generateMockTicker(pos.symbol);
+            posPrice = parseFloat(mock.lastPrice);
+            state.prices[pos.symbol] = posPrice;
+        }
         if (!posPrice) return pos.unrealizedPnl || 0;
         if (pos.type === 'BUY') return (posPrice - pos.entryPrice) * pos.quantity - pos.commission - pos.slippage;
         return (pos.entryPrice - posPrice) * pos.quantity - pos.commission - pos.slippage;
