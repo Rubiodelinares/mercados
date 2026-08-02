@@ -1177,10 +1177,21 @@
                 <div class="divider my-4"></div>
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div class="p-3 rounded-lg bg-slate-900/50 border border-slate-700/40">
+                        <div class="text-[11px] text-slate-500 mb-2 font-semibold">📈 API Key de Finnhub (Stocks Reales)</div>
+                        <input type="text" id="finnhub-key" placeholder="Pega tu API key de finnhub.io aquí" class="input-trade w-full rounded-lg px-3 py-2 text-[11px] mono mb-2">
+                        <div class="flex gap-2">
+                            <button onclick="saveFinnhubKey()" class="flex-1 py-1.5 rounded-lg bg-blue-600/20 border border-blue-600/30 text-blue-400 text-[10px] font-semibold hover:bg-blue-600/30 transition">Guardar Key</button>
+                            <button onclick="window.open('https://finnhub.io/register','_blank')" class="flex-1 py-1.5 rounded-lg bg-slate-800 border border-slate-600/50 text-slate-400 text-[10px] hover:text-slate-300 transition">Obtener Key</button>
+                        </div>
+                        <div id="finnhub-status" class="text-[10px] mt-2 text-slate-500">Introduce tu API key de Finnhub para datos reales de SPY y AAPL</div>
+                    </div>
+                    <div class="p-3 rounded-lg bg-slate-900/50 border border-slate-700/40">
                         <div class="text-[11px] text-slate-500 mb-2">Webhook simulado (Telegram)</div>
                         <input type="text" id="telegram-webhook" placeholder="https://api.telegram.org/..." class="input-trade w-full rounded-lg px-3 py-2 text-[11px] mono">
                         <div class="text-[10px] text-slate-500 mt-1">Pega tu URL de webhook de Telegram aquí</div>
                     </div>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3">
                     <div class="p-3 rounded-lg bg-slate-900/50 border border-slate-700/40">
                         <div class="text-[11px] text-slate-500 mb-2 font-semibold">📧 Configurar Email Real (EmailJS)</div>
                         <input type="email" id="email-alert" placeholder="tu@email.com" class="input-trade w-full rounded-lg px-3 py-2 text-[11px] mb-2">
@@ -1826,6 +1837,55 @@ CryptoSignal Pro v4.8`
     }
     function clearAlerts() { state.alerts = []; renderAlerts(); }
 
+    let finnhubApiKey = '';
+
+    function getFinnhubKey() { return document.getElementById('finnhub-key')?.value?.trim() || finnhubApiKey; }
+    function saveFinnhubKey() {
+        const key = getFinnhubKey();
+        if (!key) { document.getElementById('finnhub-status').textContent = '⚠️ Introduce una API key válida'; document.getElementById('finnhub-status').className = 'text-[10px] mt-2 text-amber-400'; return; }
+        finnhubApiKey = key;
+        document.getElementById('finnhub-status').textContent = '✅ Finnhub conectado. Datos reales de SPY/AAPL activados.'; 
+        document.getElementById('finnhub-status').className = 'text-[10px] mt-2 text-emerald-400';
+        saveState();
+        // Refrescar datos si estamos en stocks
+        if (state.assetType === 'stock') refreshData();
+    }
+
+    async function fetchFinnhubCandles(symbol, resolution, from, to) {
+        const key = getFinnhubKey();
+        if (!key) throw new Error('Finnhub API key no configurada');
+        const url = `https://finnhub.io/api/v1/stock/candle?symbol=${symbol}&resolution=${resolution}&from=${from}&to=${to}&token=${key}`;
+        const data = await fetchWithRetry(url, {}, 2, 15000);
+        if (data.s !== 'ok' || !data.c || data.c.length === 0) throw new Error('Finnhub: sin datos de velas');
+        const candles = [];
+        for (let i = 0; i < data.c.length; i++) {
+            candles.push({
+                time: data.t[i],
+                open: data.o[i],
+                high: data.h[i],
+                low: data.l[i],
+                close: data.c[i],
+                volume: data.v[i] || 0
+            });
+        }
+        return candles;
+    }
+
+    async function fetchFinnhubQuote(symbol) {
+        const key = getFinnhubKey();
+        if (!key) throw new Error('Finnhub API key no configurada');
+        const url = `https://finnhub.io/api/v1/quote?symbol=${symbol}&token=${key}`;
+        const data = await fetchWithRetry(url, {}, 2, 15000);
+        if (!data || data.c === 0) throw new Error('Finnhub: sin datos de quote');
+        return {
+            lastPrice: data.c.toString(),
+            priceChangePercent: data.dp?.toFixed(2) || '0.00',
+            highPrice: data.h?.toString() || data.c.toString(),
+            lowPrice: data.l?.toString() || data.c.toString(),
+            volume: '0'
+        };
+    }
+
     async function fetchWithRetry(url, options = {}, maxRetries = 2, timeoutMs = 10000) {
         for (let i = 0; i < maxRetries; i++) {
             try {
@@ -2059,6 +2119,22 @@ CryptoSignal Pro v4.8`
         }
     }
     async function fetchYahooChart(symbol, interval, range) {
+        // 1. INTENTAR FINNHUB PRIMERO (si hay API key)
+        const finnhubKey = getFinnhubKey();
+        if (finnhubKey) {
+            try {
+                const resolution = interval === '15m' ? '15' : interval === '1h' ? '60' : interval === '4h' ? '60' : 'D';
+                const now = Math.floor(Date.now() / 1000);
+                const from = now - (interval === '15m' ? 30 * 86400 : interval === '1h' ? 90 * 86400 : interval === '4h' ? 180 * 86400 : 365 * 86400);
+                const candles = await fetchFinnhubCandles(symbol, resolution, from, now);
+                if (candles.length >= 50) {
+                    state.usingMock = false;
+                    console.log('[FINNHUB] Datos reales obtenidos para', symbol, '-', candles.length, 'velas');
+                    return candles;
+                }
+            } catch (e) { console.warn('Finnhub candles falló:', e.message); }
+        }
+        // 2. INTENTAR YAHOO DIRECTO
         const yfInterval = interval === '15m' ? '15m' : interval === '1h' ? '1h' : interval === '4h' ? '4h' : '1d';
         const yfRange = range || (interval === '15m' ? '1mo' : interval === '1h' ? '3mo' : interval === '4h' ? '6mo' : '1y');
         const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=${yfInterval}&range=${yfRange}&includeAdjustedClose=true`;
@@ -2084,6 +2160,17 @@ CryptoSignal Pro v4.8`
         catch (e) { console.warn('Binance ticker falló, usando simulado para', symbol); state.usingMock = true; return generateMockTicker(symbol.replace('USDT','')); }
     }
     async function fetchYahooQuote(symbol) {
+        // 1. INTENTAR FINNHUB PRIMERO (si hay API key)
+        const finnhubKey = getFinnhubKey();
+        if (finnhubKey) {
+            try {
+                const quote = await fetchFinnhubQuote(symbol);
+                state.usingMock = false;
+                console.log('[FINNHUB] Quote real obtenido para', symbol, '-', quote.lastPrice);
+                return quote;
+            } catch (e) { console.warn('Finnhub quote falló:', e.message); }
+        }
+        // 2. INTENTAR YAHOO DIRECTO
         const url = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=2d`;
         try {
             const json = await fetchWithRetry(url, {}, 2, 10000);
@@ -2429,26 +2516,37 @@ CryptoSignal Pro v4.8`
     }
     function renderPositions() {
         const container = document.getElementById('positions-list');
-        const positions = state.portfolio.positions.filter(p => p.symbol === state.symbol); document.getElementById('open-count').textContent = positions.length;
-        if (positions.length === 0) { container.innerHTML = '<div class="text-center py-6 text-xs text-slate-500">Sin posiciones</div>'; return; }
+        const positions = state.portfolio.positions; // MOSTRAR TODAS las posiciones de TODOS los activos
+        document.getElementById('open-count').textContent = positions.length;
+        if (positions.length === 0) { container.innerHTML = '<div class="text-center py-6 text-xs text-slate-500">Sin posiciones abiertas</div>'; return; }
         container.innerHTML = positions.map(pos => {
-            const pnl = getUnrealizedPnl(pos); const pnlPct = pos.amount > 0 ? (pnl / pos.amount * 100).toFixed(2) : '0,00'; const isProfit = pnl >= 0; const current = state.currentPrice;
+            const posPrice = state.prices[pos.symbol] || state.currentPrice;
+            const pnl = getUnrealizedPnl(pos); 
+            const pnlPct = pos.amount > 0 ? (pnl / pos.amount * 100).toFixed(2) : '0,00'; 
+            const isProfit = pnl >= 0; 
+            const assetType = pos.symbol.includes('USDT') ? 'crypto' : 'stock';
+            const assetLabel = pos.symbol.replace('USDT','');
+            const isSelected = pos.symbol === state.symbol;
             return `
-                <div class="position-card rounded-xl p-3 text-[11px]">
+                <div class="position-card rounded-xl p-3 text-[11px] ${isSelected ? 'border-l-2 border-l-blue-500' : ''}">
                     <div class="flex justify-between items-start mb-2">
-                        <div><span class="font-semibold ${pos.type === 'BUY' ? 'text-emerald-400' : 'text-red-400'}">${pos.type === 'BUY' ? 'LONG' : 'SHORT'}</span><span class="text-slate-500 ml-1">${pos.symbol.replace('USDT','')}</span></div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-semibold ${pos.type === 'BUY' ? 'text-emerald-400' : 'text-red-400'}">${pos.type === 'BUY' ? '▲ LONG' : '▼ SHORT'}</span>
+                            <span class="tag tag-blue text-[9px]">${assetLabel}</span>
+                            ${isSelected ? '<span class="text-[9px] text-blue-400">● Activo</span>' : ''}
+                        </div>
                         <button onclick="closePosition(${pos.id})" class="px-2 py-1 rounded bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-slate-300 transition text-[10px]">Cerrar</button>
                     </div>
                     <div class="grid grid-cols-2 gap-x-3 gap-y-1 text-[10px] text-slate-400">
-                        <div>Entrada: <span class="mono text-slate-400">${formatPrice(pos.entryPrice, state.assetType)}</span></div>
-                        <div>Actual: <span class="mono text-slate-400">${formatPrice(current, state.assetType)}</span></div>
-                        <div>SL: <span class="mono text-red-400/50">${formatPrice(pos.slPrice, state.assetType)}</span></div>
-                        <div>TP: <span class="mono text-emerald-400/50">${formatPrice(pos.tpPrice, state.assetType)}</span></div>
-                        ${pos.trailingEnabled ? `<div colspan="2">Trailing: <span class="mono text-amber-400/50">${formatPrice(pos.trailingStop, state.assetType)}</span></div>` : ''}
+                        <div>Entrada: <span class="mono text-slate-300">${formatPrice(pos.entryPrice, assetType)}</span></div>
+                        <div>Actual: <span class="mono text-slate-300">${formatPrice(posPrice, assetType)}</span></div>
+                        <div>SL: <span class="mono text-red-400/70">${formatPrice(pos.slPrice, assetType)}</span></div>
+                        <div>TP: <span class="mono text-emerald-400/70">${formatPrice(pos.tpPrice, assetType)}</span></div>
+                        ${pos.trailingEnabled ? `<div class="col-span-2">Trailing: <span class="mono text-amber-400/70">${formatPrice(pos.trailingStop, assetType)}</span></div>` : ''}
                     </div>
                     <div class="mt-2 pt-2 border-t border-slate-700/40 flex justify-between items-center">
                         <span class="text-slate-400">P&L:</span>
-                        <span class="mono font-bold ${isProfit ? 'price-up' : 'price-down'}">${isProfit ? '+' : ''}${formatPrice(pnl, state.assetType)} (${isProfit ? '+' : ''}${pnlPct}%)</span>
+                        <span class="mono font-bold ${isProfit ? 'price-up' : 'price-down'}">${isProfit ? '+' : ''}${formatPrice(pnl, assetType)} (${isProfit ? '+' : ''}${pnlPct}%)</span>
                     </div>
                 </div>`;
         }).join('');
@@ -2458,15 +2556,16 @@ CryptoSignal Pro v4.8`
         if (trades.length === 0) { tbody.innerHTML = '<tr><td colspan="9" class="py-8 text-center text-slate-500 text-sm">Sin trades</td></tr>'; return; }
         tbody.innerHTML = trades.map(t => {
             const isWin = t.netPnl > 0;
+            const assetType = t.symbol.includes('USDT') ? 'crypto' : 'stock';
             return `<tr class="trade-row border-b border-slate-800/20">
                 <td class="py-2.5 px-2 text-[11px] mono text-slate-400">${formatDate(t.entryTime)}</td>
                 <td class="py-2.5 px-2 font-medium">${t.symbol.replace('USDT','')}</td>
                 <td class="py-2.5 px-2"><span class="tag ${t.type === 'BUY' ? 'tag-green' : 'tag-red'}">${t.type === 'BUY' ? 'LONG' : 'SHORT'}</span></td>
-                <td class="py-2.5 px-2 mono">${formatPrice(t.entryPrice, state.assetType)}</td>
-                <td class="py-2.5 px-2 mono">${formatPrice(t.exitPrice, state.assetType)}</td>
-                <td class="py-2.5 px-2 mono">${formatPrice(t.amount, state.assetType)}</td>
-                <td class="py-2.5 px-2 mono text-slate-400">${formatPrice(t.commission, state.assetType)}</td>
-                <td class="py-2.5 px-2 mono font-semibold ${isWin ? 'price-up' : 'price-down'}">${isWin ? '+' : ''}${formatPrice(t.netPnl, state.assetType)}</td>
+                <td class="py-2.5 px-2 mono">${formatPrice(t.entryPrice, assetType)}</td>
+                <td class="py-2.5 px-2 mono">${formatPrice(t.exitPrice, assetType)}</td>
+                <td class="py-2.5 px-2 mono">${formatPrice(t.amount, assetType)}</td>
+                <td class="py-2.5 px-2 mono text-slate-400">${formatPrice(t.commission, assetType)}</td>
+                <td class="py-2.5 px-2 mono font-semibold ${isWin ? 'price-up' : 'price-down'}">${isWin ? '+' : ''}${formatPrice(t.netPnl, assetType)}</td>
                 <td class="py-2.5 px-2 text-slate-400">${formatDuration(t.duration)}</td>
             </tr>`;
         }).join('');
@@ -2531,17 +2630,20 @@ CryptoSignal Pro v4.8`
         checkAutoTrade(signal);
     }
     function renderBotSignals() {
-        const tbody = document.getElementById('bot-signals-table'); const signals = state.signals.filter(s => s.symbol === state.symbol).slice(0, 50);
-        if (signals.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-slate-500 text-sm">Esperando...</td></tr>'; return; }
+        const tbody = document.getElementById('bot-signals-table'); 
+        const signals = state.signals.slice(0, 100); // MOSTRAR señales de TODOS los activos
+        if (signals.length === 0) { tbody.innerHTML = '<tr><td colspan="8" class="py-8 text-center text-slate-500 text-sm">Esperando señales...</td></tr>'; return; }
         tbody.innerHTML = signals.map(s => {
             const isBuy = s.type === 'BUY';
-            return `<tr class="trade-row border-b border-slate-800/20">
+            const assetType = s.symbol.includes('USDT') ? 'crypto' : 'stock';
+            const isSelected = s.symbol === state.symbol;
+            return `<tr class="trade-row border-b border-slate-800/20 ${isSelected ? 'bg-blue-500/5' : ''}">
                 <td class="py-2.5 px-2 text-[11px] mono text-slate-400">${formatDate(s.timestamp)}</td>
-                <td class="py-2.5 px-2 font-medium">${s.symbol.replace('USDT','')}</td>
+                <td class="py-2.5 px-2 font-medium">${s.symbol.replace('USDT','')} ${isSelected ? '<span class="text-blue-400 text-[9px]">●</span>' : ''}</td>
                 <td class="py-2.5 px-2"><span class="tag ${isBuy ? 'tag-green' : 'tag-red'}">${s.type}</span></td>
-                <td class="py-2.5 px-2 mono">${formatPrice(s.price, state.assetType)}</td>
-                <td class="py-2.5 px-2 mono text-emerald-400/60">${formatPrice(s.target, state.assetType)}</td>
-                <td class="py-2.5 px-2 mono text-red-400/60">${formatPrice(s.stopLoss, state.assetType)}</td>
+                <td class="py-2.5 px-2 mono">${formatPrice(s.price, assetType)}</td>
+                <td class="py-2.5 px-2 mono text-emerald-400/70">${formatPrice(s.target, assetType)}</td>
+                <td class="py-2.5 px-2 mono text-red-400/70">${formatPrice(s.stopLoss, assetType)}</td>
                 <td class="py-2.5 px-2"><span class="tag tag-blue">${s.score}/100</span></td>
                 <td class="py-2.5 px-2 text-[10px] text-slate-400">${s.reasons?.slice(0, 2).join(', ') || ''}</td>
             </tr>`;
@@ -2790,7 +2892,8 @@ CryptoSignal Pro v4.8`
             emailAlert: document.getElementById('email-alert').value,
             emailjsService: document.getElementById('emailjs-service').value,
             emailjsTemplate: document.getElementById('emailjs-template').value,
-            emailjsPublicKey: document.getElementById('emailjs-publickey').value
+            emailjsPublicKey: document.getElementById('emailjs-publickey').value,
+            finnhubKey: getFinnhubKey()
         });
         if (hasStorage) { try { localStorage.setItem('cryptoSignalsV4', payload); } catch (e) { ramStorage = payload; } } else { ramStorage = payload; }
     }
