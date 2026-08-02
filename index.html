@@ -2747,19 +2747,23 @@ function renderNews() {
         const impactClass = n.impactLevel === 'high' ? 'impact-high' : n.impactLevel === 'medium' ? 'impact-medium' : 'impact-low';
         const impactText = n.impactLevel === 'high' ? 'ALTO' : n.impactLevel === 'medium' ? 'MEDIO' : 'BAJO';
         const assets = n.affectedAssets?.length > 0 ? n.affectedAssets.join(', ') : 'General';
-        return `
-            <a href="${n.link}" target="_blank" class="news-card block">
-                <div class="flex items-center justify-between mb-1">
-                    <span class="source text-blue-400">${n.source}</span>
-                    <span class="impact-tag ${impactClass}">${impactText}</span>
-                </div>
-                <div class="title">${n.title}</div>
-                ${n.description ? `<div class="text-[11px] text-slate-500 mt-1 line-clamp-2">${n.description}</div>` : ''}
-                <div class="meta flex justify-between mt-1">
-                    <span>hace ${Math.floor((Date.now() - n.pubDate) / 60000)} min</span>
-                    <span class="text-slate-500">${assets}</span>
-                </div>
-            </a>`;
+        const isRealLink = n.link && n.link !== '#' && n.link.startsWith('http');
+        const cardContent = `
+            <div class="flex items-center justify-between mb-1">
+                <span class="source text-blue-400">${n.source}</span>
+                <span class="impact-tag ${impactClass}">${impactText}</span>
+            </div>
+            <div class="title">${n.title}</div>
+            ${n.description ? `<div class="text-[11px] text-slate-500 mt-1 line-clamp-2">${n.description}</div>` : ''}
+            <div class="meta flex justify-between mt-1">
+                <span>hace ${Math.floor((Date.now() - n.pubDate) / 60000)} min</span>
+                <span class="text-slate-500">${assets}</span>
+            </div>`;
+        if (isRealLink) {
+            return `<a href="${n.link}" target="_blank" rel="noopener noreferrer" class="news-card block">${cardContent}</a>`;
+        } else {
+            return `<div class="news-card block cursor-default">${cardContent}<div class="text-[10px] text-amber-400/70 mt-1 italic">Noticia de demostración — sin enlace externo</div></div>`;
+        }
     }).join('');
 }
 function filterNews(type) {
