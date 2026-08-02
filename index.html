@@ -712,7 +712,23 @@
                         </div>
                     </div>
                 </div>
-            </div>
+            
+                <div class="glass rounded-2xl p-4">
+                    <div class="flex items-center justify-between mb-3">
+                        <span class="section-title">🐋 Ballenas Financieras</span>
+                        <span class="live-badge">
+                            <span class="pulse-dot green" style="width:6px;height:6px;"></span>
+                            EN VIVO
+                        </span>
+                    </div>
+                    <div id="whales-container" class="space-y-2 max-h-[280px] overflow-y-auto scroll-hide">
+                        <div class="text-center py-4 text-xs text-slate-500">Cargando movimientos...</div>
+                    </div>
+                    <div class="mt-2 p-2 rounded-lg bg-slate-900/30 border border-slate-700/20 text-[10px] text-slate-500 text-center">
+                        Movimientos simulados de entidades financieras principales. Actualizado cada 30 seg.
+                    </div>
+                </div>
+</div>
 
             <div class="space-y-4">
                 <div class="glass rounded-2xl p-4">
@@ -1065,23 +1081,7 @@
                         <div class="conf-meter mt-1"><div class="fill bg-emerald-500" id="sent-bar-btc" style="width:50%"></div></div>
                     </div>
 
-            <div class="mb-5">
-                <div class="flex items-center justify-between mb-3">
-                    <span class="section-title">🐋 Ballenas Financieras — Movimientos en Tiempo Real</span>
-                    <span class="live-badge">
-                        <span class="pulse-dot green" style="width:6px;height:6px;"></span>
-                        EN VIVO
-                    </span>
-                </div>
-                <div class="glass rounded-xl p-4">
-                    <div class="flex items-center justify-between mb-3">
-                        <span class="text-[11px] text-slate-400">Entradas y opiniones de las principales entidades financieras</span>
-                        <span class="text-[10px] text-slate-500">Actualizado cada 30 seg</span>
-                    </div>
-                    <div id="whales-container" class="space-y-2 max-h-[320px] overflow-y-auto scroll-hide">
-                        <div class="text-center py-4 text-xs text-slate-500">Cargando movimientos de ballenas...</div>
-                    </div>
-                </div>
+            
             </div>
                     <div class="glass rounded-xl p-3 text-center">
                         <div class="text-[10px] text-slate-500 mb-1">Ethereum</div>
@@ -2641,7 +2641,8 @@ function exportFullState() {
         emailjsTemplate: document.getElementById('emailjs-template').value,
         emailjsPublicKey: document.getElementById('emailjs-publickey').value,
         finnhubKey: getFinnhubKey(), alphaVantageKey: getAlphaVantageKey(),
-        twelveDataKey: getTwelveDataKey(), iexKey: getIEXKey()
+        twelveDataKey: getTwelveDataKey(), iexKey: getIEXKey(),
+        newsApiKey: document.getElementById('newsapi-key').value.trim()
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
     const link = document.createElement('a');
@@ -2666,6 +2667,8 @@ function importFullState(input) {
             if (data.alphaVantageKey) { document.getElementById('alphavantage-key').value = data.alphaVantageKey; alphaVantageKey = data.alphaVantageKey; }
             if (data.twelveDataKey) { document.getElementById('twelvedata-key').value = data.twelveDataKey; twelveDataKey = data.twelveDataKey; }
             if (data.iexKey) { document.getElementById('iex-key').value = data.iexKey; iexKey = data.iexKey; }
+            if (data.newsApiKey) { document.getElementById('newsapi-key').value = data.newsApiKey; }
+            if (data.newsApiKey) { document.getElementById('newsapi-key').value = data.newsApiKey; }
             if (data.emailAlert) document.getElementById('email-alert').value = data.emailAlert;
             if (data.emailjsService) document.getElementById('emailjs-service').value = data.emailjsService;
             if (data.emailjsTemplate) document.getElementById('emailjs-template').value = data.emailjsTemplate;
@@ -2714,7 +2717,8 @@ function saveState() {
         emailjsTemplate: document.getElementById('emailjs-template').value,
         emailjsPublicKey: document.getElementById('emailjs-publickey').value,
         finnhubKey: getFinnhubKey(), alphaVantageKey: getAlphaVantageKey(),
-        twelveDataKey: getTwelveDataKey(), iexKey: getIEXKey()
+        twelveDataKey: getTwelveDataKey(), iexKey: getIEXKey(),
+        newsApiKey: document.getElementById('newsapi-key').value.trim()
     });
     if (hasStorage) { try { localStorage.setItem('cryptoSignalsV5', payload); } catch (e) { ramStorage = payload; } } else { ramStorage = payload; }
 }
@@ -2731,6 +2735,8 @@ function loadState() {
             if (data.alphaVantageKey) { document.getElementById('alphavantage-key').value = data.alphaVantageKey; alphaVantageKey = data.alphaVantageKey; }
             if (data.twelveDataKey) { document.getElementById('twelvedata-key').value = data.twelveDataKey; twelveDataKey = data.twelveDataKey; }
             if (data.iexKey) { document.getElementById('iex-key').value = data.iexKey; iexKey = data.iexKey; }
+            if (data.newsApiKey) { document.getElementById('newsapi-key').value = data.newsApiKey; }
+            if (data.newsApiKey) { document.getElementById('newsapi-key').value = data.newsApiKey; }
             if (data.emailAlert) document.getElementById('email-alert').value = data.emailAlert;
             if (data.emailjsService) document.getElementById('emailjs-service').value = data.emailjsService;
             if (data.emailjsTemplate) document.getElementById('emailjs-template').value = data.emailjsTemplate;
