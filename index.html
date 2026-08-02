@@ -1179,7 +1179,35 @@
             <div class="mb-4 p-3 rounded-xl bg-slate-900/50 border border-slate-700/40">
                 <div class="flex flex-col md:flex-row md:items-center gap-3">
                     <div class="flex-1">
-                        <div class="text-[11px] text-slate-400 mb-1">🔑 API Key de NewsAPI.org <span class="text-slate-500">(100 req/día gratis) — Noticias internacionales traducidas</span></div>
+                        <div class="text-[11px] text-slate-400 mb-1">🔑 API Key de GNews <span class="text-slate-500">(100 noticias/día · CORS habilitado · Recomendado)</span></div>
+                        <input type="text" id="gnews-key" placeholder="Pega tu API key de gnews.io aquí" class="input-trade w-full rounded-lg px-3 py-2 text-[12px] mono">
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="saveGNewsKey()" class="px-4 py-2 rounded-lg bg-blue-600/20 border border-blue-600/30 text-blue-400 text-xs font-semibold hover:bg-blue-600/30 transition">Guardar Key</button>
+                        <button onclick="window.open('https://gnews.io/register','_blank')" class="px-4 py-2 rounded-lg bg-slate-800 border border-slate-600/50 text-slate-400 text-xs hover:text-slate-300 transition">Obtener Key</button>
+                    </div>
+                </div>
+                <div id="gnews-status" class="text-[10px] mt-2 text-slate-500"></div>
+            </div>
+
+            <div class="mb-4 p-3 rounded-xl bg-slate-900/50 border border-slate-700/40">
+                <div class="flex flex-col md:flex-row md:items-center gap-3">
+                    <div class="flex-1">
+                        <div class="text-[11px] text-slate-400 mb-1">🔑 API Key de NewsData.io <span class="text-slate-500">(200 créditos/día · CORS habilitado)</span></div>
+                        <input type="text" id="newsdata-key" placeholder="Pega tu API key de newsdata.io aquí" class="input-trade w-full rounded-lg px-3 py-2 text-[12px] mono">
+                    </div>
+                    <div class="flex gap-2">
+                        <button onclick="saveNewsDataIoKey()" class="px-4 py-2 rounded-lg bg-blue-600/20 border border-blue-600/30 text-blue-400 text-xs font-semibold hover:bg-blue-600/30 transition">Guardar Key</button>
+                        <button onclick="window.open('https://newsdata.io/register','_blank')" class="px-4 py-2 rounded-lg bg-slate-800 border border-slate-600/50 text-slate-400 text-xs hover:text-slate-300 transition">Obtener Key</button>
+                    </div>
+                </div>
+                <div id="newsdata-status" class="text-[10px] mt-2 text-slate-500"></div>
+            </div>
+
+            <div class="mb-4 p-3 rounded-xl bg-slate-900/50 border border-slate-700/40">
+                <div class="flex flex-col md:flex-row md:items-center gap-3">
+                    <div class="flex-1">
+                        <div class="text-[11px] text-slate-400 mb-1">🔑 API Key de NewsAPI.org <span class="text-slate-500">(100 req/día · Solo localhost)</span></div>
                         <input type="text" id="newsapi-key" placeholder="Pega tu API key de NewsAPI.org aquí" class="input-trade w-full rounded-lg px-3 py-2 text-[12px] mono">
                     </div>
                     <div class="flex gap-2">
@@ -1204,9 +1232,11 @@
             </div>
 
             <div class="flex items-center gap-1 mb-4 border-b border-slate-700/40 pb-2">
-                <button class="tab-btn active" onclick="switchNewsTab('global')" data-news-tab="global">🌍 Noticias Globales</button>
-                <button class="tab-btn" onclick="switchNewsTab('national')" data-news-tab="national">🇪🇸 Noticias Nacionales</button>
-                <button class="tab-btn" onclick="switchNewsTab('demo')" data-news-tab="demo">📰 Noticias Demo</button>
+                <span class="text-[11px] text-slate-400 mr-2">Filtros:</span>
+                <button class="tab-btn active" onclick="filterNews('all')" data-news-filter="all">Todas</button>
+                <button class="tab-btn" onclick="filterNews('crypto')" data-news-filter="crypto">Crypto</button>
+                <button class="tab-btn" onclick="filterNews('stocks')" data-news-filter="stocks">Stocks</button>
+                <button class="tab-btn" onclick="filterNews('macro')" data-news-filter="macro">Macro</button>
             </div>
 
             <div class="flex items-center justify-between mb-4">
@@ -1260,8 +1290,8 @@
             <div class="mb-5">
                 <div class="flex items-center justify-between mb-3">
                     <div class="flex items-center gap-3">
-                        <span class="section-title" id="news-section-title">📰 Noticias Globales en Vivo</span>
-                        <span class="text-[10px] text-slate-500" id="news-source-label">Cargando fuentes...</span>
+                        <span class="section-title" id="news-section-title">📰 Noticias Reales en Vivo</span>
+                        <span class="text-[10px] text-slate-500" id="news-source-label">Fuentes: GNews, NewsData.io, NewsAPI</span>
                     </div>
                     <div class="flex gap-2">
                         <button onclick="filterNews('all')" class="tab-btn active text-[10px]" data-news-filter="all">Todas</button>
@@ -1291,7 +1321,7 @@
 
     <footer class="max-w-[1500px] mx-auto px-4 py-6 text-center text-[11px] border-t border-slate-800/20 mt-4" style="color: var(--text-muted);">
         <p>CryptoSignal Pro v5.0 — Simulador educativo. No conecta con exchanges reales.</p>
-        <p class="mt-1">BTC/ETH/SOL: datos reales vía Binance | SPY/AAPL: 4 fuentes (Yahoo, Finnhub, Alpha Vantage, Twelve Data) + simulación realista</p>
+        <p class="mt-1">BTC/ETH/SOL: datos reales vía CoinGecko | SPY/AAPL: 4 fuentes (Yahoo, Finnhub, Alpha Vantage, Twelve Data) + simulación realista</p>
     </footer>
 
     <div id="settings-modal" class="modal-overlay hidden" onclick="if(event.target===this)closeSettings()">
@@ -1424,10 +1454,10 @@ const MOCK_BASE_PRICES = {
     'SPY': 585, 'AAPL': 225, 'BTC': 63400, 'ETH': 3200, 'SOL': 73
 };
 const MOCK_VOLATILITY = {
-    'SPY': 0.003, 'AAPL': 0.005, 'BTC': 0.008, 'ETH': 0.01, 'SOL': 0.015
+    'SPY': 0.002, 'AAPL': 0.003, 'BTC': 0.004, 'ETH': 0.005, 'SOL': 0.008
 };
 const MOCK_TREND = {
-    'SPY': 0.00005, 'AAPL': 0.0001, 'BTC': 0.0002, 'ETH': 0.0003, 'SOL': 0.0004
+    'SPY': 0.00002, 'AAPL': 0.00003, 'BTC': 0.00005, 'ETH': 0.00008, 'SOL': 0.0001
 };
 
 const IS_LOCAL_FILE = window.location.protocol === 'file:';
@@ -1711,16 +1741,52 @@ async function fetchIEXQuote(symbol) {
 }
 
 // ==================== CRYPTO: BINANCE ====================
-async function fetchBinanceKlines(symbol, interval, limit = 400) {
-    const url = `https://api.binance.com/api/v3/klines?symbol=${symbol}&interval=${interval}&limit=${limit}`;
-    const data = await fetchWithRetry(url, {}, 3, 10000);
-    if (!Array.isArray(data)) throw new Error('Binance: datos inválidos');
-    return data.map(d => ({ time: d[0] / 1000, open: parseFloat(d[1]), high: parseFloat(d[2]), low: parseFloat(d[3]), close: parseFloat(d[4]), volume: parseFloat(d[5]) }));
+async function fetchCoinGeckoKlines(symbol, interval, limit = 400) {
+    const idMap = { 'BTCUSDT': 'bitcoin', 'ETHUSDT': 'ethereum', 'SOLUSDT': 'solana' };
+    const id = idMap[symbol] || 'bitcoin';
+    const days = interval === '15m' ? 1 : interval === '1h' ? 7 : interval === '4h' ? 30 : 90;
+    const url = `https://api.coingecko.com/api/v3/coins/${id}/market_chart?vs_currency=usd&days=${days}`;
+    const data = await fetchWithRetry(url, {}, 2, 15000);
+    if (!data || !data.prices || !Array.isArray(data.prices)) throw new Error('CoinGecko: sin datos');
+    const prices = data.prices;
+    const volumes = data.total_volumes || [];
+    const candles = [];
+    const intervalMs = interval === '15m' ? 900000 : interval === '1h' ? 3600000 : interval === '4h' ? 14400000 : 86400000;
+    let currentBucket = null;
+    for (let i = 0; i < prices.length; i++) {
+        const time = Math.floor(prices[i][0] / 1000);
+        const price = prices[i][1];
+        const vol = volumes[i] ? volumes[i][1] : 0;
+        const bucketTime = Math.floor(time / (intervalMs / 1000)) * (intervalMs / 1000);
+        if (!currentBucket || currentBucket.time !== bucketTime) {
+            if (currentBucket) candles.push(currentBucket);
+            currentBucket = { time: bucketTime, open: price, high: price, low: price, close: price, volume: vol };
+        } else {
+            currentBucket.high = Math.max(currentBucket.high, price);
+            currentBucket.low = Math.min(currentBucket.low, price);
+            currentBucket.close = price;
+            currentBucket.volume += vol;
+        }
+    }
+    if (currentBucket) candles.push(currentBucket);
+    if (candles.length < 50) throw new Error('CoinGecko: datos insuficientes');
+    return candles.slice(-limit);
 }
 
-async function fetchBinanceTicker(symbol) {
-    const url = `https://api.binance.com/api/v3/ticker/24hr?symbol=${symbol}`;
-    return await fetchWithRetry(url, {}, 3, 10000);
+async function fetchCoinGeckoTicker(symbol) {
+    const idMap = { 'BTCUSDT': 'bitcoin', 'ETHUSDT': 'ethereum', 'SOLUSDT': 'solana' };
+    const id = idMap[symbol] || 'bitcoin';
+    const url = `https://api.coingecko.com/api/v3/coins/${id}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false`;
+    const data = await fetchWithRetry(url, {}, 2, 15000);
+    if (!data || !data.market_data) throw new Error('CoinGecko: sin datos');
+    const md = data.market_data;
+    return {
+        lastPrice: (md.current_price?.usd || 0).toString(),
+        priceChangePercent: (md.price_change_percentage_24h || 0).toString(),
+        highPrice: (md.high_24h?.usd || md.current_price?.usd || 0).toString(),
+        lowPrice: (md.low_24h?.usd || md.current_price?.usd || 0).toString(),
+        volume: (md.total_volume?.usd || 0).toString()
+    };
 }
 
 // ==================== OBTENER DATOS CON 4 FUENTES + FALLBACK ====================
@@ -2114,9 +2180,9 @@ function drawMiniChart(containerId, candles, color) {
 async function fetchMTFData() {
     try {
         let candles4h, candles1d;
-        try { candles4h = state.assetType === 'crypto' ? await fetchBinanceKlines(state.symbol, '4h', 200) : await getStockCandles(state.symbol, '4h'); }
+        try { candles4h = state.assetType === 'crypto' ? await fetchCoinGeckoKlines(state.symbol, '4h', 200) : await getStockCandles(state.symbol, '4h'); }
         catch (e) { console.warn('MTF 4H error:', e.message); candles4h = state.candles.slice(-200); }
-        try { candles1d = state.assetType === 'crypto' ? await fetchBinanceKlines(state.symbol, '1d', 100) : await getStockCandles(state.symbol, '1d'); }
+        try { candles1d = state.assetType === 'crypto' ? await fetchCoinGeckoKlines(state.symbol, '1d', 100) : await getStockCandles(state.symbol, '1d'); }
         catch (e) { console.warn('MTF 1D error:', e.message); candles1d = state.candles.slice(-100); }
         if (!candles4h || candles4h.length < 50 || !candles1d || candles1d.length < 50) throw new Error('Datos MTF insuficientes');
         const ema200_4h = calculateEMA(candles4h, 200); const rsi4h = calculateRSI(candles4h, 14);
@@ -2166,17 +2232,13 @@ function showSignalError(message, canRetry) {
 function showStockWarning() {
     const banner = document.getElementById('stock-warning-banner');
     const sourceLabel = document.getElementById('stock-data-source');
-    if (state.assetType === 'stock') {
-        banner.classList.remove('hidden');
-        if (state.usingMock) {
-            sourceLabel.textContent = 'Usando simulación realista (precios aproximados). Para datos reales, abre desde un servidor web o configura API key.';
-            sourceLabel.style.color = '#fbbf24';
-        } else {
-            sourceLabel.textContent = `Datos reales vía ${state.dataSource}.`;
-            sourceLabel.style.color = '#4ade80';
-        }
+    banner.classList.remove('hidden');
+    if (state.usingMock) {
+        sourceLabel.textContent = state.assetType === 'stock' ? 'Usando simulación realista. Para datos reales de SPY/AAPL, abre desde un servidor web o configura API key (Finnhub, Alpha Vantage, Twelve Data).' : 'Usando simulación realista.';
+        sourceLabel.style.color = '#fbbf24';
     } else {
-        banner.classList.add('hidden');
+        sourceLabel.textContent = `Datos reales vía ${state.dataSource}.`;
+        sourceLabel.style.color = '#4ade80';
     }
 }
 function addSignalToHistory(signal) {
@@ -2235,7 +2297,7 @@ function updateIndicatorsUI(indicators, candles) {
 async function updatePrices() {
     try {
         let ticker;
-        if (state.assetType === 'crypto') ticker = await fetchBinanceTicker(state.symbol);
+        if (state.assetType === 'crypto') ticker = await fetchCoinGeckoTicker(state.symbol);
         else ticker = await getStockQuote(state.symbol);
         const price = parseFloat(ticker.lastPrice);
         const change = parseFloat(ticker.priceChangePercent);
@@ -2269,7 +2331,7 @@ async function updatePositionPrices() {
         const assetType = sym.includes('USDT') ? 'crypto' : 'stock';
         try {
             let ticker;
-            if (assetType === 'crypto') ticker = await fetchBinanceTicker(sym);
+            if (assetType === 'crypto') ticker = await fetchCoinGeckoTicker(sym);
             else ticker = await getStockQuote(sym);
             const price = parseFloat(ticker.lastPrice);
             if (!isNaN(price) && price > 0) state.prices[sym] = price;
@@ -2694,8 +2756,8 @@ async function refreshData() {
         let candles;
         try {
             if (state.assetType === 'crypto') {
-                candles = await fetchBinanceKlines(state.symbol, state.interval, 400);
-                state.dataSource = 'Binance';
+                candles = await fetchCoinGeckoKlines(state.symbol, state.interval, 400);
+                state.dataSource = 'CoinGecko (real)';
                 state.usingMock = false;
             } else {
                 candles = await getStockCandles(state.symbol, state.interval);
@@ -2803,6 +2865,8 @@ function exportFullState() {
         emailjsPublicKey: document.getElementById('emailjs-publickey').value,
         finnhubKey: getFinnhubKey(), alphaVantageKey: getAlphaVantageKey(),
         twelveDataKey: getTwelveDataKey(), iexKey: getIEXKey(),
+        gnewsKey: document.getElementById('gnews-key')?.value?.trim() || '',
+        newsdataKey: document.getElementById('newsdata-key')?.value?.trim() || '',
         newsApiKey: document.getElementById('newsapi-key').value.trim()
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -2828,7 +2892,8 @@ function importFullState(input) {
             if (data.alphaVantageKey) { document.getElementById('alphavantage-key').value = data.alphaVantageKey; alphaVantageKey = data.alphaVantageKey; }
             if (data.twelveDataKey) { document.getElementById('twelvedata-key').value = data.twelveDataKey; twelveDataKey = data.twelveDataKey; }
             if (data.iexKey) { document.getElementById('iex-key').value = data.iexKey; iexKey = data.iexKey; }
-            if (data.newsApiKey) { document.getElementById('newsapi-key').value = data.newsApiKey; }
+            if (data.gnewsKey) { document.getElementById('gnews-key').value = data.gnewsKey; }
+            if (data.newsdataKey) { document.getElementById('newsdata-key').value = data.newsdataKey; }
             if (data.newsApiKey) { document.getElementById('newsapi-key').value = data.newsApiKey; }
             if (data.emailAlert) document.getElementById('email-alert').value = data.emailAlert;
             if (data.emailjsService) document.getElementById('emailjs-service').value = data.emailjsService;
@@ -2879,6 +2944,8 @@ function saveState() {
         emailjsPublicKey: document.getElementById('emailjs-publickey').value,
         finnhubKey: getFinnhubKey(), alphaVantageKey: getAlphaVantageKey(),
         twelveDataKey: getTwelveDataKey(), iexKey: getIEXKey(),
+        gnewsKey: document.getElementById('gnews-key')?.value?.trim() || '',
+        newsdataKey: document.getElementById('newsdata-key')?.value?.trim() || '',
         newsApiKey: document.getElementById('newsapi-key').value.trim()
     });
     if (hasStorage) { try { localStorage.setItem('cryptoSignalsV5', payload); } catch (e) { ramStorage = payload; } } else { ramStorage = payload; }
@@ -2896,7 +2963,8 @@ function loadState() {
             if (data.alphaVantageKey) { document.getElementById('alphavantage-key').value = data.alphaVantageKey; alphaVantageKey = data.alphaVantageKey; }
             if (data.twelveDataKey) { document.getElementById('twelvedata-key').value = data.twelveDataKey; twelveDataKey = data.twelveDataKey; }
             if (data.iexKey) { document.getElementById('iex-key').value = data.iexKey; iexKey = data.iexKey; }
-            if (data.newsApiKey) { document.getElementById('newsapi-key').value = data.newsApiKey; }
+            if (data.gnewsKey) { document.getElementById('gnews-key').value = data.gnewsKey; }
+            if (data.newsdataKey) { document.getElementById('newsdata-key').value = data.newsdataKey; }
             if (data.newsApiKey) { document.getElementById('newsapi-key').value = data.newsApiKey; }
             if (data.emailAlert) document.getElementById('email-alert').value = data.emailAlert;
             if (data.emailjsService) document.getElementById('emailjs-service').value = data.emailjsService;
@@ -2917,40 +2985,129 @@ function resetAll() {
 
 // ==================== NOTICIAS (SIMPLIFICADO) ====================
 function getNewsApiKey() { return document.getElementById('newsapi-key').value.trim(); }
+function saveGNewsKey() {
+    const key = document.getElementById('gnews-key')?.value?.trim() || '';
+    if (!key) { document.getElementById('gnews-status').textContent = '⚠️ Introduce una API key'; document.getElementById('gnews-status').className = 'text-[10px] mt-2 text-amber-400'; return; }
+    document.getElementById('gnews-status').textContent = '✅ GNews conectado'; document.getElementById('gnews-status').className = 'text-[10px] mt-2 text-emerald-400'; saveState(); renderNews();
+}
+function saveNewsDataIoKey() {
+    const key = document.getElementById('newsdata-key')?.value?.trim() || '';
+    if (!key) { document.getElementById('newsdata-status').textContent = '⚠️ Introduce una API key'; document.getElementById('newsdata-status').className = 'text-[10px] mt-2 text-amber-400'; return; }
+    document.getElementById('newsdata-status').textContent = '✅ NewsData.io conectado'; document.getElementById('newsdata-status').className = 'text-[10px] mt-2 text-emerald-400'; saveState(); renderNews();
+}
 function saveNewsApiKey() {
     const key = getNewsApiKey();
     if (!key) { document.getElementById('newsapi-status').textContent = '⚠️ Introduce una API key'; document.getElementById('newsapi-status').className = 'text-[10px] mt-2 text-amber-400'; return; }
-    document.getElementById('newsapi-status').textContent = '✅ Key guardada'; document.getElementById('newsapi-status').className = 'text-[10px] mt-2 text-emerald-400'; saveState(); refreshIntel(); renderWhales();
+    document.getElementById('newsapi-status').textContent = '✅ NewsAPI conectado'; document.getElementById('newsapi-status').className = 'text-[10px] mt-2 text-emerald-400'; saveState(); renderNews();
 }
 
-function generateDemoNews() {
-    const now = Date.now();
-    return [
-        { title: 'Bitcoin supera los $70.000 tras aprobación de ETF en Asia', source: 'CoinTelegraph', type: 'crypto', pubDate: now - 3600000, description: 'El precio de Bitcoin ha experimentado un fuerte repunte tras la aprobación de nuevos fondos cotizados.', link: 'https://cointelegraph.com', isReal: false, translated: false, lang: 'es' },
-        { title: 'Solana alcanza nuevo máximo impulsado por DeFi y NFTs', source: 'CoinDesk', type: 'crypto', pubDate: now - 1800000, description: 'La red Solana continúa su expansión con nuevos proyectos DeFi.', link: 'https://coindesk.com', isReal: false, translated: false, lang: 'es' },
-        { title: 'La FED mantiene tasas sin cambios: mercados reaccionan al alza', source: 'Bloomberg', type: 'macro', pubDate: now - 7200000, description: 'La Reserva Federal decidió mantener los tipos de interés.', link: 'https://bloomberg.com', isReal: false, translated: false, lang: 'es' },
-        { title: 'Apple anuncia nuevos modelos: acciones suben un 3%', source: 'Reuters', type: 'stocks', pubDate: now - 10800000, description: 'La presentación del nuevo iPhone ha generado entusiasmo.', link: 'https://reuters.com', isReal: false, translated: false, lang: 'es' },
-        { title: 'Ethereum completa actualización: comisiones caen un 90%', source: 'The Block', type: 'crypto', pubDate: now - 14400000, description: 'La red Ethereum ha implementado con éxito la actualización.', link: 'https://theblock.co', isReal: false, translated: false, lang: 'es' },
-        { title: 'Tensiones geopolíticas impulsan demanda de activos refugio', source: 'BBC', type: 'macro', pubDate: now - 18000000, description: 'Los conflictos están impulsando a los inversores hacia activos refugio.', link: 'https://bbc.com/news/business', isReal: false, translated: false, lang: 'es' },
-        { title: 'El S&P 500 marca nuevo máximo impulsado por tecnológicas', source: 'CNBC', type: 'stocks', pubDate: now - 21600000, description: 'Los grandes valores tecnológicos lideran las ganancias.', link: 'https://cnbc.com', isReal: false, translated: false, lang: 'es' },
-        { title: 'SEC retrasa decisión sobre ETF de Solana', source: 'Decrypt', type: 'crypto', pubDate: now - 25200000, description: 'La Comisión de Valores pospone su decisión.', link: 'https://decrypt.co', isReal: false, translated: false, lang: 'es' },
-        { title: 'Inflación en EEUU baja: expectativas de recorte de tasas crecen', source: 'Financial Times', type: 'macro', pubDate: now - 28800000, description: 'Los datos de inflación son mejor de lo esperado.', link: 'https://ft.com', isReal: false, translated: false, lang: 'es' },
-    ];
+
+// ==================== NOTICIAS REALES ====================
+// GNews API - CORS all origins, 100 req/day free, requires API key
+// NewsData.io - CORS all origins, 200 credits/day free, requires API key
+
+async function fetchGNews(apiKey, query, lang, maxResults = 10) {
+    if (!apiKey) throw new Error('GNews: sin API key');
+    const url = `https://gnews.io/api/v4/search?q=${encodeURIComponent(query)}&lang=${lang}&max=${maxResults}&apikey=${apiKey}`;
+    const data = await fetchWithRetry(url, {}, 2, 15000);
+    if (!data || !data.articles) throw new Error('GNews: sin datos');
+    return data.articles.map(a => ({
+        title: a.title,
+        source: a.source?.name || 'GNews',
+        type: query.includes('crypto') || query.includes('bitcoin') ? 'crypto' : query.includes('stock') || query.includes('market') ? 'stocks' : 'macro',
+        pubDate: new Date(a.publishedAt).getTime(),
+        description: a.description || '',
+        link: a.url,
+        isReal: true,
+        image: a.image
+    }));
 }
 
-function generateDemoNewsNational() {
-    const now = Date.now();
-    return [
-        { title: 'El Ibex 35 cierra en verde impulsado por el sector bancario español', source: 'El País', type: 'stocks', pubDate: now - 1800000, description: 'Los bancos españoles lideran las ganancias en la Bolsa de Madrid tras los resultados trimestrales.', link: 'https://elpais.com/economia', isReal: false, translated: false, lang: 'es' },
-        { title: 'El Banco de España advierte sobre el riesgo de burbuja inmobiliaria', source: 'El Mundo', type: 'macro', pubDate: now - 3600000, description: 'El organismo supervisor alerta sobre los precios de la vivienda en las principales ciudades españolas.', link: 'https://elmundo.es/economia', isReal: false, translated: false, lang: 'es' },
-        { title: 'Telefónica anuncia inversión récord en fibra óptica: 5.000 millones', source: 'La Vanguardia', type: 'stocks', pubDate: now - 5400000, description: 'La operadora española destinará una inversión histórica a la expansión de la red de fibra.', link: 'https://lavanguardia.com/economia', isReal: false, translated: false, lang: 'es' },
-        { title: 'El Gobierno aprueba nuevas medidas fiscales para startups tecnológicas', source: 'El Confidencial', type: 'macro', pubDate: now - 7200000, description: 'Las nuevas medidas buscan atraer inversión extranjera al sector tecnológico español.', link: 'https://elconfidencial.com/economia', isReal: false, translated: false, lang: 'es' },
-        { title: 'Santander supera expectativas con beneficios de 3.200 millones', source: 'Cinco Días', type: 'stocks', pubDate: now - 9000000, description: 'El banco español presenta resultados trimestrales por encima de las previsiones del mercado.', link: 'https://cincodias.elpais.com', isReal: false, translated: false, lang: 'es' },
-        { title: 'El turismo español bate récord de ingresos en el primer semestre', source: 'ABC', type: 'macro', pubDate: now - 10800000, description: 'El sector turístico español alcanza cifras históricas de facturación.', link: 'https://abc.es/economia', isReal: false, translated: false, lang: 'es' },
-        { title: 'Inditex (Zara) presenta resultados mixtos: ventas online crecen un 15%', source: 'Expansión', type: 'stocks', pubDate: now - 12600000, description: 'El gigante textil español muestra fortaleza en el canal digital.', link: 'https://expansion.com', isReal: false, translated: false, lang: 'es' },
-        { title: 'La deuda pública española supera el 110% del PIB', source: 'El Economista', type: 'macro', pubDate: now - 14400000, description: 'El Ministerio de Hacienda publica las últimas cifras de deuda soberana.', link: 'https://eleconomista.es', isReal: false, translated: false, lang: 'es' },
-        { title: 'Repsol invierte en energías renovables: nuevo parque solar en Andalucía', source: 'El Mundo', type: 'stocks', pubDate: now - 16200000, description: 'La petrolera española acelera su transición energética con nuevos proyectos fotovoltaicos.', link: 'https://elmundo.es/economia', isReal: false, translated: false, lang: 'es' },
-    ];
+async function fetchNewsDataIo(apiKey, query, lang, maxResults = 10) {
+    if (!apiKey) throw new Error('NewsData.io: sin API key');
+    const url = `https://newsdata.io/api/1/latest?apikey=${apiKey}&q=${encodeURIComponent(query)}&language=${lang}&size=${maxResults}`;
+    const data = await fetchWithRetry(url, {}, 2, 15000);
+    if (!data || !data.results) throw new Error('NewsData.io: sin datos');
+    return data.results.map(a => ({
+        title: a.title,
+        source: a.source_id || 'NewsData.io',
+        type: query.includes('crypto') || query.includes('bitcoin') ? 'crypto' : query.includes('stock') || query.includes('market') ? 'stocks' : 'macro',
+        pubDate: new Date(a.pubDate).getTime(),
+        description: a.description || '',
+        link: a.link,
+        isReal: true,
+        image: a.image_url
+    }));
+}
+
+async function fetchRealNews() {
+    const gnewsKey = document.getElementById('gnews-key')?.value?.trim() || '';
+    const newsdataKey = document.getElementById('newsdata-key')?.value?.trim() || '';
+    const newsapiKey = document.getElementById('newsapi-key')?.value?.trim() || '';
+
+    const allNews = [];
+    const errors = [];
+
+    // Noticias en español
+    if (gnewsKey) {
+        try {
+            const esNews = await fetchGNews(gnewsKey, 'economía OR bolsa OR mercados OR bitcoin', 'es', 10);
+            allNews.push(...esNews.map(n => ({ ...n, lang: 'es' })));
+        } catch (e) { errors.push('GNews ES: ' + e.message); }
+    }
+    if (newsdataKey) {
+        try {
+            const esNews = await fetchNewsDataIo(newsdataKey, 'economy OR stock OR market OR crypto', 'es', 10);
+            allNews.push(...esNews.map(n => ({ ...n, lang: 'es' })));
+        } catch (e) { errors.push('NewsData.io ES: ' + e.message); }
+    }
+
+    // Noticias en inglés (internacionales)
+    if (gnewsKey) {
+        try {
+            const enNews = await fetchGNews(gnewsKey, 'bitcoin OR ethereum OR crypto OR stock market OR fed OR inflation', 'en', 10);
+            allNews.push(...enNews.map(n => ({ ...n, lang: 'en' })));
+        } catch (e) { errors.push('GNews EN: ' + e.message); }
+    }
+    if (newsdataKey) {
+        try {
+            const enNews = await fetchNewsDataIo(newsdataKey, 'bitcoin OR ethereum OR crypto OR stock market OR fed OR inflation', 'en', 10);
+            allNews.push(...enNews.map(n => ({ ...n, lang: 'en' })));
+        } catch (e) { errors.push('NewsData.io EN: ' + e.message); }
+    }
+
+    // Fallback a NewsAPI (solo si está en localhost/GitHub Pages con key)
+    if (newsapiKey && allNews.length === 0) {
+        try {
+            const url = `https://newsapi.org/v2/everything?q=bitcoin OR crypto OR stock market&language=en&sortBy=publishedAt&pageSize=10&apiKey=${newsapiKey}`;
+            const data = await fetchWithRetry(url, {}, 1, 15000);
+            if (data && data.articles) {
+                allNews.push(...data.articles.map(a => ({
+                    title: a.title,
+                    source: a.source?.name || 'NewsAPI',
+                    type: 'macro',
+                    pubDate: new Date(a.publishedAt).getTime(),
+                    description: a.description || '',
+                    link: a.url,
+                    isReal: true,
+                    lang: 'en'
+                })));
+            }
+        } catch (e) { errors.push('NewsAPI: ' + e.message); }
+    }
+
+    if (allNews.length === 0 && errors.length > 0) {
+        throw new Error(errors.join(' | '));
+    }
+
+    // Ordenar por fecha y eliminar duplicados por título
+    allNews.sort((a, b) => b.pubDate - a.pubDate);
+    const seen = new Set();
+    return allNews.filter(n => {
+        if (seen.has(n.title)) return false;
+        seen.add(n.title);
+        return true;
+    }).slice(0, 20);
 }
 
 function analyzeNewsImpact(title, desc) {
@@ -2967,38 +3124,86 @@ function analyzeNewsImpact(title, desc) {
 
 let currentNewsFilter = 'all';
 function switchNewsTab(tab) {
-    state.currentNewsTab = tab;
-    document.querySelectorAll('[data-news-tab]').forEach(b => b.classList.remove('active'));
-    document.querySelector(`[data-news-tab="${tab}"]`).classList.add('active');
+    // Deprecated: all news are now real and filtered by type
     renderNews();
 }
-function renderNews() {
+async function renderNews() {
     const container = document.getElementById('news-container');
-    let cache = state.currentNewsTab === 'demo' ? generateDemoNews() : (state.currentNewsTab === 'national' ? generateDemoNewsNational() : generateDemoNews());
-    const filtered = currentNewsFilter === 'all' ? cache : cache.filter(n => n.type === currentNewsFilter);
-    if (filtered.length === 0) { container.innerHTML = '<div class="text-center py-8 text-xs text-slate-500 col-span-2">Sin noticias</div>'; return; }
-    container.innerHTML = filtered.map(n => {
-        const impactClass = n.impactLevel === 'high' ? 'impact-high' : n.impactLevel === 'medium' ? 'impact-medium' : 'impact-low';
-        const impactText = n.impactLevel === 'high' ? 'ALTO' : n.impactLevel === 'medium' ? 'MEDIO' : 'BAJO';
-        const assets = n.affectedAssets?.length > 0 ? n.affectedAssets.join(', ') : 'General';
-        const isRealLink = n.link && n.link !== '#' && n.link.startsWith('http');
-        const cardContent = `
-            <div class="flex items-center justify-between mb-1">
-                <span class="source text-blue-400">${n.source}</span>
-                <span class="impact-tag ${impactClass}">${impactText}</span>
+    const gnewsKey = document.getElementById('gnews-key')?.value?.trim() || '';
+    const newsdataKey = document.getElementById('newsdata-key')?.value?.trim() || '';
+    const newsapiKey = document.getElementById('newsapi-key')?.value?.trim() || '';
+
+    // Si no hay ninguna API key configurada, mostrar mensaje informativo
+    if (!gnewsKey && !newsdataKey && !newsapiKey) {
+        container.innerHTML = `
+            <div class="col-span-2 p-4 rounded-xl bg-amber-500/5 border border-amber-500/15 text-center">
+                <div class="text-amber-400 font-semibold text-sm mb-2">🔑 Noticias Reales Requieren API Key</div>
+                <div class="text-[11px] text-slate-400 mb-3">Para ver noticias reales de fuentes como Reuters, Bloomberg, El País, etc., configura una API key gratuita:</div>
+                <div class="space-y-2 text-[11px] text-left">
+                    <div class="p-2 rounded bg-slate-900/40 border border-slate-700/30">
+                        <strong class="text-slate-300">1. GNews</strong> (recomendado)<br>
+                        <span class="text-slate-500">100 noticias/día · CORS habilitado · Gratis</span><br>
+                        <a href="https://gnews.io/register" target="_blank" class="text-blue-400 hover:underline">Registrarse →</a>
+                    </div>
+                    <div class="p-2 rounded bg-slate-900/40 border border-slate-700/30">
+                        <strong class="text-slate-300">2. NewsData.io</strong><br>
+                        <span class="text-slate-500">200 créditos/día · CORS habilitado · Gratis</span><br>
+                        <a href="https://newsdata.io/register" target="_blank" class="text-blue-400 hover:underline">Registrarse →</a>
+                    </div>
+                    <div class="p-2 rounded bg-slate-900/40 border border-slate-700/30">
+                        <strong class="text-slate-300">3. NewsAPI.org</strong><br>
+                        <span class="text-slate-500">100 req/día · Solo localhost · Gratis</span><br>
+                        <a href="https://newsapi.org/register" target="_blank" class="text-blue-400 hover:underline">Registrarse →</a>
+                    </div>
+                </div>
+                <div class="text-[10px] text-slate-500 mt-3">Pega tu key en la pestaña 🔔 Alertas → Configuración de API Keys</div>
             </div>
-            <div class="title">${n.title}</div>
-            ${n.description ? `<div class="text-[11px] text-slate-500 mt-1 line-clamp-2">${n.description}</div>` : ''}
-            <div class="meta flex justify-between mt-1">
-                <span>hace ${Math.floor((Date.now() - n.pubDate) / 60000)} min</span>
-                <span class="text-slate-500">${assets}</span>
-            </div>`;
-        if (isRealLink) {
-            return `<a href="${n.link}" target="_blank" rel="noopener noreferrer" class="news-card block">${cardContent}</a>`;
-        } else {
-            return `<div class="news-card block cursor-default">${cardContent}<div class="text-[10px] text-amber-400/70 mt-1 italic">Noticia de demostración — sin enlace externo</div></div>`;
+        `;
+        return;
+    }
+
+    container.innerHTML = '<div class="col-span-2 text-center py-8 text-xs text-slate-500"><div class="loading-spinner mx-auto mb-2"></div>Cargando noticias reales...</div>';
+
+    try {
+        const news = await fetchRealNews();
+        const filtered = currentNewsFilter === 'all' ? news : news.filter(n => n.type === currentNewsFilter);
+
+        if (filtered.length === 0) {
+            container.innerHTML = '<div class="col-span-2 text-center py-8 text-xs text-slate-500">Sin noticias para este filtro</div>';
+            return;
         }
-    }).join('');
+
+        container.innerHTML = filtered.map(n => {
+            const impact = analyzeNewsImpact(n.title, n.description);
+            const impactClass = impact.impactLevel === 'high' ? 'impact-high' : impact.impactLevel === 'medium' ? 'impact-medium' : 'impact-low';
+            const impactText = impact.impactLevel === 'high' ? 'ALTO' : impact.impactLevel === 'medium' ? 'MEDIO' : 'BAJO';
+            const assets = impact.affectedAssets?.length > 0 ? impact.affectedAssets.join(', ') : 'General';
+            const timeAgo = Math.floor((Date.now() - n.pubDate) / 60000);
+            const timeStr = timeAgo < 60 ? `hace ${timeAgo} min` : `hace ${Math.floor(timeAgo/60)}h`;
+            const langTag = n.lang === 'es' ? '<span class="tag tag-blue text-[9px] ml-1">ES</span>' : '<span class="tag tag-slate text-[9px] ml-1">EN</span>';
+
+            return `<a href="${n.link}" target="_blank" rel="noopener noreferrer" class="news-card block">
+                <div class="flex items-center justify-between mb-1">
+                    <span class="source text-blue-400">${n.source}</span>
+                    <span class="impact-tag ${impactClass}">${impactText}</span>
+                </div>
+                <div class="title">${n.title}</div>
+                ${n.description ? `<div class="text-[11px] text-slate-500 mt-1 line-clamp-2">${n.description}</div>` : ''}
+                <div class="meta flex justify-between mt-1">
+                    <span>${timeStr}</span>
+                    <span class="text-slate-500">${assets}${langTag}</span>
+                </div>
+            </a>`;
+        }).join('');
+    } catch (e) {
+        container.innerHTML = `
+            <div class="col-span-2 p-4 rounded-xl bg-red-500/5 border border-red-500/15 text-center">
+                <div class="text-red-400 font-semibold text-sm mb-1">⚠️ Error al cargar noticias</div>
+                <div class="text-[11px] text-slate-400">${e.message}</div>
+                <div class="text-[10px] text-slate-500 mt-2">Verifica que tu API key sea válida y no haya excedido el límite diario.</div>
+            </div>
+        `;
+    }
 }
 function filterNews(type) {
     currentNewsFilter = type;
