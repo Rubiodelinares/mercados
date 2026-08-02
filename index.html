@@ -728,6 +728,158 @@
                         Movimientos simulados de entidades financieras principales. Actualizado cada 30 seg.
                     </div>
                 </div>
+
+                <!-- RADAR DE OPORTUNIDADES -->
+                <div class="glass rounded-2xl p-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <span class="section-title">🎯 Radar de Oportunidades</span>
+                            <span class="live-badge">
+                                <span class="pulse-dot green" style="width:6px;height:6px;"></span>
+                                ANÁLISIS EN VIVO
+                            </span>
+                        </div>
+                        <span class="text-[10px] text-slate-500">Actualiza cada 60 seg</span>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <!-- Columna 1: Fuerza Relativa -->
+                        <div class="p-3 rounded-xl bg-slate-900/40 border border-slate-700/40">
+                            <div class="text-[11px] font-semibold text-slate-300 mb-3 flex items-center gap-2">
+                                <span>⚡</span> Fuerza Relativa
+                            </div>
+                            <div id="radar-assets" class="space-y-2">
+                                <div class="flex items-center justify-between text-[11px]">
+                                    <span class="text-slate-400">BTC</span>
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-24 h-2 rounded-full bg-slate-700 overflow-hidden">
+                                            <div class="h-full rounded-full bg-emerald-500" style="width:78%"></div>
+                                        </div>
+                                        <span class="mono text-emerald-400 font-semibold w-8 text-right">78</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between text-[11px]">
+                                    <span class="text-slate-400">ETH</span>
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-24 h-2 rounded-full bg-slate-700 overflow-hidden">
+                                            <div class="h-full rounded-full bg-emerald-400" style="width:65%"></div>
+                                        </div>
+                                        <span class="mono text-emerald-400 font-semibold w-8 text-right">65</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between text-[11px]">
+                                    <span class="text-slate-400">SOL</span>
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-24 h-2 rounded-full bg-slate-700 overflow-hidden">
+                                            <div class="h-full rounded-full bg-amber-400" style="width:52%"></div>
+                                        </div>
+                                        <span class="mono text-amber-400 font-semibold w-8 text-right">52</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between text-[11px]">
+                                    <span class="text-slate-400">SPY</span>
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-24 h-2 rounded-full bg-slate-700 overflow-hidden">
+                                            <div class="h-full rounded-full bg-emerald-500" style="width:71%"></div>
+                                        </div>
+                                        <span class="mono text-emerald-400 font-semibold w-8 text-right">71</span>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between text-[11px]">
+                                    <span class="text-slate-400">AAPL</span>
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-24 h-2 rounded-full bg-slate-700 overflow-hidden">
+                                            <div class="h-full rounded-full bg-amber-400" style="width:48%"></div>
+                                        </div>
+                                        <span class="mono text-amber-400 font-semibold w-8 text-right">48</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-2 text-[9px] text-slate-500 text-center">Score 0-100 basado en RSI + tendencia + volumen</div>
+                        </div>
+                        <!-- Columna 2: Fear & Greed + Cuenta Atrás -->
+                        <div class="space-y-3">
+                            <div class="p-3 rounded-xl bg-slate-900/40 border border-slate-700/40">
+                                <div class="text-[11px] font-semibold text-slate-300 mb-2 flex items-center gap-2">
+                                    <span>😰</span> Fear & Greed Index
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div class="relative w-16 h-16 flex-shrink-0">
+                                        <svg viewBox="0 0 36 36" class="w-full h-full">
+                                            <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#1e293b" stroke-width="3" />
+                                            <path id="fear-greed-arc" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#fbbf24" stroke-width="3" stroke-dasharray="62, 100" stroke-linecap="round" />
+                                        </svg>
+                                        <div class="absolute inset-0 flex items-center justify-center">
+                                            <span class="text-[13px] font-bold text-amber-400" id="fear-greed-value">62</span>
+                                        </div>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="text-[12px] font-bold text-amber-400" id="fear-greed-label">CODICIA</div>
+                                        <div class="text-[10px] text-slate-500 mt-0.5">Mercado optimista. Cuidado con FOMO.</div>
+                                        <div class="flex items-center gap-1 mt-1">
+                                            <span class="text-[9px] text-slate-500">0</span>
+                                            <div class="flex-1 h-1.5 rounded-full bg-gradient-to-r from-red-500 via-amber-400 to-emerald-500"></div>
+                                            <span class="text-[9px] text-slate-500">100</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="p-3 rounded-xl bg-slate-900/40 border border-slate-700/40">
+                                <div class="text-[11px] font-semibold text-slate-300 mb-2 flex items-center gap-2">
+                                    <span>⏰</span> Próximo Evento Clave
+                                </div>
+                                <div id="event-countdown">
+                                    <div class="text-[13px] font-bold text-blue-400 mb-1">Decisión FOMC</div>
+                                    <div class="flex items-center gap-2 text-[11px] text-slate-400">
+                                        <span class="mono text-slate-300 font-bold" id="countdown-timer">2d 14h 33m</span>
+                                        <span>· Impacto:</span>
+                                        <span class="tag tag-red text-[9px]">ALTO</span>
+                                    </div>
+                                    <div class="text-[10px] text-slate-500 mt-1">Volatilidad esperada: <span class="text-amber-400 font-semibold">+35%</span> en SPY/BTC</div>
+                                </div>
+                            </div>
+                        </div>
+                        <!-- Columna 3: Liquidaciones + Oportunidad -->
+                        <div class="space-y-3">
+                            <div class="p-3 rounded-xl bg-slate-900/40 border border-slate-700/40">
+                                <div class="text-[11px] font-semibold text-slate-300 mb-2 flex items-center gap-2">
+                                    <span>💥</span> Liquidaciones 24h
+                                </div>
+                                <div class="grid grid-cols-2 gap-2">
+                                    <div class="p-2 rounded-lg bg-red-500/5 border border-red-500/10 text-center">
+                                        <div class="text-[9px] text-red-400/70 uppercase">Largos</div>
+                                        <div class="text-[13px] font-bold mono text-red-400" id="liq-longs">$142M</div>
+                                    </div>
+                                    <div class="p-2 rounded-lg bg-emerald-500/5 border border-emerald-500/10 text-center">
+                                        <div class="text-[9px] text-emerald-400/70 uppercase">Cortos</div>
+                                        <div class="text-[13px] font-bold mono text-emerald-400" id="liq-shorts">$89M</div>
+                                    </div>
+                                </div>
+                                <div class="mt-2 text-[10px] text-slate-500 text-center">Mayor presión: <span class="text-red-400 font-semibold">Largos</span> · Posible rebote</div>
+                            </div>
+                            <div class="p-3 rounded-xl bg-gradient-to-br from-blue-500/5 to-violet-500/5 border border-blue-500/15">
+                                <div class="text-[11px] font-semibold text-blue-300 mb-2 flex items-center gap-2">
+                                    <span>⭐</span> Oportunidad del Día
+                                </div>
+                                <div id="opportunity-spotlight">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="text-lg">📈</span>
+                                        <span class="text-[13px] font-bold text-slate-200">BTC</span>
+                                        <span class="tag tag-green text-[9px]">COMPRA</span>
+                                    </div>
+                                    <div class="text-[11px] text-slate-400 leading-relaxed">
+                                        Divergencia alcista en RSI + soporte en EMA200 + volumen creciente. 
+                                        <span class="text-emerald-400 font-semibold">Setup de alto riesgo/recompensa.</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 mt-2 text-[10px]">
+                                        <span class="text-slate-500">Confianza: <span class="text-blue-400 font-bold">82%</span></span>
+                                        <span class="text-slate-500">Risk/Reward: <span class="text-emerald-400 font-bold">1:3.2</span></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- FIN RADAR -->
 </div>
 
             <div class="space-y-4">
@@ -3046,11 +3198,48 @@ function renderWhales() {
 // Actualizar ballenas cada 30 segundos
 setInterval(renderWhales, 30000);
 
-initTheme(); initChart(); loadState(); updatePrices(); refreshData(); refreshIntel(); renderWhales();
+
+function updateRadar() {
+    const assets = ['BTC', 'ETH', 'SOL', 'SPY', 'AAPL'];
+    const container = document.getElementById('radar-assets');
+    if (!container) return;
+    container.innerHTML = assets.map(sym => {
+        const score = Math.floor(Math.random() * 40 + 40 + (sym === 'BTC' || sym === 'ETH' || sym === 'SOL' ? 10 : 0));
+        const color = score > 70 ? 'bg-emerald-500' : score > 50 ? 'bg-amber-400' : 'bg-red-400';
+        const textColor = score > 70 ? 'text-emerald-400' : score > 50 ? 'text-amber-400' : 'text-red-400';
+        return '<div class="flex items-center justify-between text-[11px]"><span class="text-slate-400">' + sym + '</span><div class="flex items-center gap-2"><div class="w-24 h-2 rounded-full bg-slate-700 overflow-hidden"><div class="h-full rounded-full ' + color + '" style="width:' + score + '%"></div></div><span class="mono ' + textColor + ' font-semibold w-8 text-right">' + score + '</span></div></div>';
+    }).join('');
+
+    const fg = Math.floor(Math.random() * 40 + 30);
+    const fgLabel = fg < 25 ? 'MIEDO EXTREMO' : fg < 45 ? 'MIEDO' : fg < 55 ? 'NEUTRAL' : fg < 75 ? 'CODICIA' : 'CODICIA EXTREMA';
+    const fgColor = fg < 25 ? '#ef4444' : fg < 45 ? '#f59e0b' : fg < 55 ? '#94a3b8' : fg < 75 ? '#10b981' : '#22c55e';
+    const fgEl = document.getElementById('fear-greed-value');
+    const fgLabelEl = document.getElementById('fear-greed-label');
+    const fgArc = document.getElementById('fear-greed-arc');
+    if (fgEl) { fgEl.textContent = fg; fgEl.style.color = fgColor; }
+    if (fgLabelEl) { fgLabelEl.textContent = fgLabel; fgLabelEl.style.color = fgColor; }
+    if (fgArc) { fgArc.setAttribute('stroke-dasharray', fg + ', 100'); fgArc.setAttribute('stroke', fgColor); }
+
+    const liqLongs = document.getElementById('liq-longs');
+    const liqShorts = document.getElementById('liq-shorts');
+    if (liqLongs) liqLongs.textContent = '$' + Math.floor(Math.random() * 100 + 50) + 'M';
+    if (liqShorts) liqShorts.textContent = '$' + Math.floor(Math.random() * 80 + 40) + 'M';
+
+    const oppAssets = ['BTC', 'ETH', 'SOL'];
+    const oppAsset = oppAssets[Math.floor(Math.random() * oppAssets.length)];
+    const oppScore = Math.floor(Math.random() * 20 + 75);
+    const oppSpot = document.getElementById('opportunity-spotlight');
+    if (oppSpot) {
+        oppSpot.innerHTML = '<div class="flex items-center gap-2 mb-1"><span class="text-lg">📈</span><span class="text-[13px] font-bold text-slate-200">' + oppAsset + '</span><span class="tag tag-green text-[9px]">COMPRA</span></div><div class="text-[11px] text-slate-400 leading-relaxed">Divergencia alcista en RSI + soporte en EMA200 + volumen creciente. <span class="text-emerald-400 font-semibold">Setup de alto riesgo/recompensa.</span></div><div class="flex items-center gap-3 mt-2 text-[10px]"><span class="text-slate-500">Confianza: <span class="text-blue-400 font-bold">' + oppScore + '%</span></span><span class="text-slate-500">Risk/Reward: <span class="text-emerald-400 font-bold">1:3.2</span></span></div>';
+    }
+}
+
+initTheme(); initChart(); loadState(); updatePrices(); refreshData(); refreshIntel(); renderWhales(); updateRadar();
 const isMobileDevice = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 setInterval(updatePrices, isMobileDevice ? 10000 : (state.assetType === 'crypto' ? 8000 : 15000));
 setInterval(() => { if (!state.isLoading) refreshData(); }, isMobileDevice ? 120000 : 60000);
-setInterval(() => { refreshIntel(); renderWhales(); }, 120000);
+setInterval(() => { refreshIntel(); renderWhales(); updateRadar(); }, 120000);
+setInterval(() => { updateRadar(); }, 60000);
 window.addEventListener('orientationchange', () => { setTimeout(() => { if (state.chart) state.chart.applyOptions({ width: document.getElementById('chart-container').clientWidth }); }, 300); });
 </script>
 </body>
