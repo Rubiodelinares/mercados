@@ -1745,61 +1745,122 @@ async function fetchIEXQuote(symbol) {
 }
 
 // ==================== CRYPTO: BINANCE ====================
-async function fetchCoinGeckoKlines(symbol, interval, limit = 400) {
-    const idMap = { 'BTCUSDT': 'bitcoin', 'ETHUSDT': 'ethereum', 'SOLUSDT': 'solana' };
-    const id = idMap[symbol] || 'bitcoin';
-    // CoinGecko OHLC API: days=1 → 5min, days=7 → 1h, days=30 → 4h, days=90 → 1d
-    const daysMap = { '15m': 1, '1h': 7, '4h': 30, '1d': 90 };
-    const days = daysMap[interval] || 7;
-    const url = `https://api.coingecko.com/api/v3/coins/${id}/ohlc?vs_currency=usd&days=${days}`;
-    const data = await fetchWithRetry(url, {}, 2, 15000);
-    if (!data || !Array.isArray(data) || data.length === 0) throw new Error('CoinGecko OHLC: sin datos');
-    // CoinGecko OHLC devuelve: [[timestamp, open, high, low, close], ...]
-    let candles = data.map(d => ({
-        time: Math.floor(d[0] / 1000),
-        open: d[1],
-        high: d[2],
-        low: d[3],
-        close: d[4],
-        volume: 0
-    }));
-    // Para 15m, agrupar datos de 5m en grupos de 3
-    if (interval === '15m' && candles.length > 0) {
-        const grouped = [];
-        for (let i = 0; i < candles.length; i += 3) {
-            const group = candles.slice(i, i + 3);
-            if (group.length === 0) continue;
-            grouped.push({
-                time: group[0].time,
-                open: group[0].open,
-                high: Math.max(...group.map(c => c.high)),
-                low: Math.min(...group.map(c => c.low)),
-                close: group[group.length - 1].close,
-                volume: 0
-            });
+async function fetchCryptoKlines(symbol, interval, limit = 400) {
+    const ySym = symbol.replace('USDT', '-USD');
+    const yfInterval = interval === '15m' ? '15m' : interval === '1h' ? '1h' : interval === '4h' ? '4h' : '1d';
+    const yfRange = interval === '15m' ? '1mo' : interval === '1h' ? '3mo' : interval === '4h' ? '6mo' : '1y';
+
+    // 1. Try Yahoo Finance first (works from file://, no strict rate limits, real OHLC + volume)
+    try {
+        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ySym}?interval=${yfInterval}&range=${yfRange}&includeAdjustedClose=true`;
+        const json = await fetchWithRetry(url, {}, 2, 15000);
+        if (json.chart && json.chart.result && json.chart.result.length > 0) {
+            const result = json.chart.result[0];
+            const timestamps = result.timestamp;
+            const q = result.indicators.quote[0];
+            const candles = [];
+            for (let i = 0; i < timestamps.length; i++) {
+                if (q.open[i] === null || q.open[i] === undefined) continue;
+                candles.push({ 
+                    time: timestamps[i], 
+                    open: q.open[i], 
+                    high: q.high[i], 
+                    low: q.low[i], 
+                    close: q.close[i], 
+                    volume: q.volume[i] || 0 
+                });
+            }
+            if (candles.length >= 50) {
+                state.dataSource = 'Yahoo Finance (real)';
+                state.usingMock = false;
+                return candles;
+            }
         }
-        candles = grouped;
-    }
-    if (candles.length < 10) throw new Error('CoinGecko OHLC: datos insuficientes');
-    return candles.slice(-limit);
-}
+    } catch (e) { console.warn('[Yahoo Crypto] Falló:', e.message); }
 
-async function fetchCoinGeckoTicker(symbol) {
-    const idMap = { 'BTCUSDT': 'bitcoin', 'ETHUSDT': 'ethereum', 'SOLUSDT': 'solana' };
-    const id = idMap[symbol] || 'bitcoin';
-    const url = `https://api.coingecko.com/api/v3/coins/${id}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false`;
-    const data = await fetchWithRetry(url, {}, 2, 15000);
-    if (!data || !data.market_data) throw new Error('CoinGecko: sin datos');
-    const md = data.market_data;
-    return {
-        lastPrice: (md.current_price?.usd || 0).toString(),
-        priceChangePercent: (md.price_change_percentage_24h || 0).toString(),
-        highPrice: (md.high_24h?.usd || md.current_price?.usd || 0).toString(),
-        lowPrice: (md.low_24h?.usd || md.current_price?.usd || 0).toString(),
-        volume: (md.total_volume?.usd || 0).toString()
-    };
-}
+    // 2. Fallback to CoinGecko OHLC
+    try {
+        const idMap = { 'BTCUSDT': 'bitcoin', 'ETHUSDT': 'ethereum', 'SOLUSDT': 'solana' };
+        const id = idMap[symbol] || 'bitcoin';
+        const daysMap = { '15m': 1, '1h': 7, '4h': 30, '1d': 90 };
+        const days = daysMap[interval] || 7;
+        const url = `https://api.coingecko.com/api/v3/coins/${id}/ohlc?vs_currency=usd&days=${days}`;
+        const data = await fetchWithRetry(url, {}, 2, 15000);
+        if (data && Array.isArray(data) && data.length > 0) {
+            let candles = data.map(d => ({
+                time: Math.floor(d[0] / 1000),
+                open: d[1], high: d[2], low: d[3], close: d[4],
+                volume: 0
+            }));
+            if (interval === '15m' && candles.length > 0) {
+                const grouped = [];
+                for (let i = 0; i < candles.length; i += 3) {
+                    const group = candles.slice(i, i + 3);
+                    if (group.length === 0) continue;
+                    grouped.push({
+                        time: group[0].time, open: group[0].open,
+                        high: Math.max(...group.map(c => c.high)),
+                        low: Math.min(...group.map(c => c.low)),
+                        close: group[group.length - 1].close, volume: 0
+                    });
+                }
+                candles = grouped;
+            }
+            if (candles.length >= 10) {
+                state.dataSource = 'CoinGecko (real)';
+                state.usingMock = false;
+                return candles.slice(-limit);
+            }
+        }
+    } catch (e) { console.warn('[CoinGecko] Falló:', e.message); }
 
+    // 3. Last resort: realistic simulation
+    throw new Error('Todas las fuentes fallaron');
+}
+async function fetchCryptoTicker(symbol) {
+    const ySym = symbol.replace('USDT', '-USD');
+    // 1. Yahoo Finance first
+    try {
+        const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ySym}?interval=1d&range=2d`;
+        const json = await fetchWithRetry(url, {}, 2, 10000);
+        if (json.chart && json.chart.result && json.chart.result.length > 0) {
+            const r = json.chart.result[0]; const q = r.indicators.quote[0];
+            const lastIdx = q.close.length - 1; const prevClose = q.close[lastIdx - 1] || q.close[lastIdx];
+            const change = ((q.close[lastIdx] - prevClose) / prevClose * 100);
+            state.dataSource = 'Yahoo Finance (real)';
+            state.usingMock = false;
+            return {
+                lastPrice: q.close[lastIdx].toString(),
+                priceChangePercent: change.toString(),
+                highPrice: (r.meta.regularMarketDayHigh || Math.max(...q.high.filter(v => v !== null))).toString(),
+                lowPrice: (r.meta.regularMarketDayLow || Math.min(...q.low.filter(v => v !== null))).toString(),
+                volume: (q.volume[lastIdx] || 0).toString()
+            };
+        }
+    } catch (e) { console.warn('[Yahoo Crypto Ticker] Falló:', e.message); }
+
+    // 2. Fallback CoinGecko
+    try {
+        const idMap = { 'BTCUSDT': 'bitcoin', 'ETHUSDT': 'ethereum', 'SOLUSDT': 'solana' };
+        const id = idMap[symbol] || 'bitcoin';
+        const url = `https://api.coingecko.com/api/v3/coins/${id}?localization=false&tickers=false&market_data=true&community_data=false&developer_data=false`;
+        const data = await fetchWithRetry(url, {}, 2, 15000);
+        if (data && data.market_data) {
+            const md = data.market_data;
+            state.dataSource = 'CoinGecko (real)';
+            state.usingMock = false;
+            return {
+                lastPrice: (md.current_price?.usd || 0).toString(),
+                priceChangePercent: (md.price_change_percentage_24h || 0).toString(),
+                highPrice: (md.high_24h?.usd || md.current_price?.usd || 0).toString(),
+                lowPrice: (md.low_24h?.usd || md.current_price?.usd || 0).toString(),
+                volume: (md.total_volume?.usd || 0).toString()
+            };
+        }
+    } catch (e) { console.warn('[CoinGecko Ticker] Falló:', e.message); }
+
+    throw new Error('No se pudieron obtener precios reales');
+}
 // ==================== OBTENER DATOS CON 4 FUENTES + FALLBACK ====================
 async function getStockCandles(symbol, interval) {
     const resolution = interval === '15m' ? '15' : interval === '1h' ? '60' : interval === '4h' ? '60' : 'D';
@@ -2193,7 +2254,7 @@ async function fetchMTFData() {
         let candles4h, candles1d;
         try { 
             if (state.assetType === 'crypto') {
-                try { candles4h = await fetchCoinGeckoKlines(state.symbol, '4h', 200); }
+                try { candles4h = await fetchCryptoKlines(state.symbol, '4h', 200); }
                 catch (cgErr) {
                     try {
                         const ySym = state.symbol.replace('USDT', '-USD');
@@ -2213,7 +2274,7 @@ async function fetchMTFData() {
         catch (e) { console.warn('MTF 4H error:', e.message); candles4h = state.candles.slice(-200); }
         try { 
             if (state.assetType === 'crypto') {
-                try { candles1d = await fetchCoinGeckoKlines(state.symbol, '1d', 100); }
+                try { candles1d = await fetchCryptoKlines(state.symbol, '1d', 100); }
                 catch (cgErr) {
                     try {
                         const ySym = state.symbol.replace('USDT', '-USD');
@@ -2350,37 +2411,12 @@ async function updatePrices() {
         let ticker;
         if (state.assetType === 'crypto') {
             try {
-                ticker = await fetchCoinGeckoTicker(state.symbol);
-                state.dataSource = 'CoinGecko (real)';
-                state.usingMock = false;
-            } catch (cgErr) {
-                // Fallback a Yahoo Finance para crypto
-                try {
-                    const ySym = state.symbol.replace('USDT', '-USD');
-                    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ySym}?interval=1d&range=2d`;
-                    const json = await fetchWithRetry(url, {}, 1, 10000);
-                    if (json.chart && json.chart.result && json.chart.result.length > 0) {
-                        const r = json.chart.result[0]; const q = r.indicators.quote[0];
-                        const lastIdx = q.close.length - 1; const prevClose = q.close[lastIdx - 1] || q.close[lastIdx];
-                        const change = ((q.close[lastIdx] - prevClose) / prevClose * 100);
-                        ticker = {
-                            lastPrice: q.close[lastIdx].toString(),
-                            priceChangePercent: change.toString(),
-                            highPrice: (r.meta.regularMarketDayHigh || Math.max(...q.high.filter(v => v !== null))).toString(),
-                            lowPrice: (r.meta.regularMarketDayLow || Math.min(...q.low.filter(v => v !== null))).toString(),
-                            volume: (q.volume[lastIdx] || 0).toString()
-                        };
-                        state.dataSource = 'Yahoo Finance (real)';
-                        state.usingMock = false;
-                    } else {
-                        throw new Error('Yahoo: sin datos');
-                    }
-                } catch (yErr) {
-                    // Fallback a simulación
-                    ticker = generateMockTicker(state.symbol);
-                    state.dataSource = 'Simulación (CoinGecko/Yahoo no disponibles)';
-                    state.usingMock = true;
-                }
+                ticker = await fetchCryptoTicker(state.symbol);
+            } catch (e) {
+                console.warn('Crypto ticker error:', e.message);
+                ticker = generateMockTicker(state.symbol);
+                state.dataSource = 'Simulación';
+                state.usingMock = true;
             }
         } else {
             ticker = await getStockQuote(state.symbol);
@@ -2417,7 +2453,7 @@ async function updatePositionPrices() {
         const assetType = sym.includes('USDT') ? 'crypto' : 'stock';
         try {
             let ticker;
-            if (assetType === 'crypto') ticker = await fetchCoinGeckoTicker(sym);
+            if (assetType === 'crypto') ticker = await fetchCryptoTicker(sym);
             else ticker = await getStockQuote(sym);
             const price = parseFloat(ticker.lastPrice);
             if (!isNaN(price) && price > 0) state.prices[sym] = price;
@@ -2842,60 +2878,21 @@ async function refreshData() {
         let candles;
         try {
             if (state.assetType === 'crypto') {
-                candles = await fetchCoinGeckoKlines(state.symbol, state.interval, 400);
-                state.dataSource = 'CoinGecko (real)';
-                state.usingMock = false;
+                candles = await fetchCryptoKlines(state.symbol, state.interval, 400);
             } else {
                 candles = await getStockCandles(state.symbol, state.interval);
             }
         } catch (e) {
-            console.error('Error fetch principal:', e);
-            if (state.assetType === 'stock') {
-                state.usingMock = true;
-                candles = generateMockCandles(state.symbol, state.interval, 400);
-            } else {
-                // Fallback para crypto: intentar Yahoo Finance
-                try {
-                    const ySym = state.symbol.replace('USDT', '-USD');
-                    const yfInterval = state.interval === '15m' ? '15m' : state.interval === '1h' ? '1h' : state.interval === '4h' ? '4h' : '1d';
-                    const yfRange = state.interval === '15m' ? '1mo' : state.interval === '1h' ? '3mo' : state.interval === '4h' ? '6mo' : '1y';
-                    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ySym}?interval=${yfInterval}&range=${yfRange}`;
-                    const json = await fetchWithRetry(url, {}, 1, 10000);
-                    if (json.chart && json.chart.result && json.chart.result.length > 0) {
-                        const result = json.chart.result[0];
-                        const timestamps = result.timestamp;
-                        const q = result.indicators.quote[0];
-                        candles = [];
-                        for (let i = 0; i < timestamps.length; i++) {
-                            if (q.open[i] === null || q.open[i] === undefined) continue;
-                            candles.push({ time: timestamps[i], open: q.open[i], high: q.high[i], low: q.low[i], close: q.close[i], volume: q.volume[i] || 0 });
-                        }
-                        if (candles.length >= 50) {
-                            state.dataSource = 'Yahoo Finance (real)';
-                            state.usingMock = false;
-                        } else {
-                            throw new Error('Yahoo: datos insuficientes');
-                        }
-                    } else {
-                        throw new Error('Yahoo: sin datos');
-                    }
-                } catch (yErr) {
-                    console.warn('Yahoo fallback falló:', yErr.message);
-                    // Último fallback: simulación realista
-                    state.usingMock = true;
-                    candles = generateMockCandles(state.symbol, state.interval, 400);
-                    state.dataSource = 'Simulación (CoinGecko/Yahoo no disponibles)';
-                }
-            }
+            console.error('Error fetch principal:', e.message);
+            state.usingMock = true;
+            candles = generateMockCandles(state.symbol, state.interval, 400);
+            state.dataSource = 'Simulación (fuentes reales no disponibles)';
         }
 
         if (!candles || candles.length < 50) {
-            if (state.assetType === 'stock') {
-                state.usingMock = true;
-                candles = generateMockCandles(state.symbol, state.interval, 400);
-            } else {
-                throw new Error('Datos insuficientes');
-            }
+            state.usingMock = true;
+            candles = generateMockCandles(state.symbol, state.interval, 400);
+            state.dataSource = 'Simulación (datos insuficientes)';
         }
 
         state.candles = candles;
